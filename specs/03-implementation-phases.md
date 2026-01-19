@@ -16,8 +16,8 @@ Minimal full-stack application with core monitoring and control. No scheduling f
   - `POST /api/system/fan` - Set fan speed (low/medium/high/auto)
   - `POST /api/system/power` - System on/off
   - `GET /api/zones` - List zones with current state
-  - `POST /api/zones/{id}/temperature` - Set target temperature (16-32°C)
-  - `POST /api/zones/{id}/state` - Zone open/close
+  - `POST /api/zones/{id}/target` - Set target temperature (16-32°C)
+  - `POST /api/zones/{id}/power` - Zone open/close
 
 **Frontend:**
 - React SPA with Vite
