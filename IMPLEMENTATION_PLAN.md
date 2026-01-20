@@ -19,7 +19,9 @@ This is a greenfield project - no source code exists yet. Implementation proceed
 
 **Last Updated:** 2026-01-20
 **Status:** Phase 1 complete. Backend, Frontend, Backend Testing, and Frontend Polish all finished.
-**Next Action:** Begin Phase 2 - Temperature History (logging, graphs)
+**Next Action:** Begin Phase 2.4 - Frontend History View (backend infrastructure already complete)
+
+**Critical Bug Fixed (2026-01-20):** The `findHourlyAveragesByZoneIdAndTimestampBetween` repository method was missing, causing the backend to fail to compile. This has been fixed.
 
 Dashboard MVP is complete with:
 - Backend: Kotlin/Spring Boot REST API, MyAir client integration, SQLite database, 32 unit tests
@@ -82,7 +84,7 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 | 1 | 1.1-1.5 | Backend setup, MyAir client, REST API | Complete |
 | 2 | 1.6-1.10 | Frontend setup, Dashboard, Zone cards | Complete |
 | 3 | 1.11-1.12 | Testing & polish | Complete |
-| 4 | 2.1-2.4 | Temperature history logging & graphs | Not Started |
+| 4 | 2.1-2.4 | Temperature history logging & graphs | Backend Complete - Frontend Not Started |
 | 5 | 3.1-3.5 | Season-based scheduling system | Not Started |
 | 6 | 4.1-4.4 | Manual override with hold duration | Not Started |
 
@@ -355,36 +357,36 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 ## Phase 2: Temperature History (Priority: MEDIUM)
 
 ### 2.1 Backend Database Schema
-- [ ] Create `model/TemperatureLog.kt` entity:
+- [x] Create `model/TemperatureLog.kt` entity:
   - `id: Long`, `timestamp: Instant`, `zoneId: Int`
   - `currentTemp: Double`, `targetTemp: Double`, `zoneEnabled: Boolean`
-- [ ] Create `model/SystemLog.kt` entity:
+- [x] Create `model/SystemLog.kt` entity:
   - `id: Long`, `timestamp: Instant`
   - `mode: String`, `outdoorTemp: Double?`, `systemOn: Boolean`
-- [ ] Create `repository/TemperatureLogRepository.kt`
-- [ ] Create `repository/SystemLogRepository.kt`
-- [ ] Update `schema.sql` with new tables
+- [x] Create `repository/TemperatureLogRepository.kt`
+- [x] Create `repository/SystemLogRepository.kt`
+- [x] Update `schema.sql` with new tables
 
 ### 2.2 Backend Logging Service
-- [ ] Create `service/TemperatureLoggingService.kt`
-- [ ] Implement `@Scheduled` task to poll MyAir every 5 minutes
-- [ ] Log temperature readings for each zone
-- [ ] Log system state (mode, outdoor temp, power state)
-- [ ] Add configuration: `logging.interval-minutes: 5`
-- [ ] Create `service/DataRetentionService.kt`
-- [ ] Implement daily cleanup job for records older than retention period
-- [ ] Add configuration: `logging.retention-days: 90`
+- [x] Create `service/TemperatureLoggingService.kt`
+- [x] Implement `@Scheduled` task to poll MyAir every 5 minutes
+- [x] Log temperature readings for each zone
+- [x] Log system state (mode, outdoor temp, power state)
+- [x] Add configuration: `logging.interval-minutes: 5`
+- [x] Create `service/DataRetentionService.kt`
+- [x] Implement daily cleanup job for records older than retention period
+- [x] Add configuration: `logging.retention-days: 90`
 
 ### 2.3 Backend History API
-- [ ] Create `controller/HistoryController.kt`
-- [ ] `GET /api/history/zones/{id}?from=&to=`:
+- [x] Create `controller/HistoryController.kt`
+- [x] `GET /api/history/zones/{id}?from=&to=`:
   - Query parameters: `from` (ISO timestamp), `to` (ISO timestamp)
   - Response: `[{ timestamp, currentTemp, targetTemp, zoneEnabled }]`
   - Default: last 24 hours if no params
   - Support aggregation for large time ranges (hourly averages for 7d+)
-- [ ] `GET /api/history/system?from=&to=`:
+- [x] `GET /api/history/system?from=&to=`:
   - Response: `[{ timestamp, mode, outdoorTemp, systemOn }]`
-- [ ] Create DTOs for history responses
+- [x] Create DTOs for history responses
 
 ### 2.4 Frontend History View
 - [ ] Install charting library: Recharts
