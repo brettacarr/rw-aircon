@@ -15,26 +15,24 @@ This is a greenfield project - no source code exists yet. Implementation proceed
 
 ---
 
-## Project Status: Not Started
+## Project Status: Phase 1.1-1.5 Complete (Backend)
 
 **Last Updated:** 2026-01-20
-**Verified:** Source directories (`backend/`, `frontend/`, `src/`) confirmed absent via glob search. Ready to begin Phase 1 implementation.
-**Analysis Date:** 2026-01-20
-**Next Action:** Begin Phase 1.1 - Backend Project Setup
+**Status:** Backend implementation complete. Ready for frontend development.
+**Next Action:** Begin Phase 1.6 - Frontend Project Setup
 
-No source code exists yet. The entire application needs to be built from scratch according to specifications.
+Backend foundation is complete with Kotlin/Spring Boot REST API, MyAir client integration, and SQLite database.
 
 ### Verification Performed
-- Glob search for `backend/**/*` - No files found
-- Glob search for `frontend/**/*` - No files found
-- Glob search for `src/**/*` - No files found
+- Backend builds successfully with `./gradlew build`
 - Specs verified: 01-technical-stack.md, 02-core-features.md, 03-implementation-phases.md, 04-myair-api.md
 - API sample data verified: docs/myapi-response.json matches expected structure
+- Note: `git push` requires SSH key setup (user to configure)
 
-### Key Directories (To Be Created)
-- `backend/` - Kotlin + Spring Boot REST API
-- `frontend/` - React + TypeScript SPA
-- `backend/data/` - SQLite database storage
+### Key Directories
+- `backend/` - Kotlin + Spring Boot REST API (created)
+- `frontend/` - React + TypeScript SPA (to be created)
+- `backend/data/` - SQLite database storage (created at runtime)
 
 ---
 
@@ -78,7 +76,7 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 
 | Priority | Phase | Description | Status |
 |----------|-------|-------------|--------|
-| 1 | 1.1-1.5 | Backend setup, MyAir client, REST API | Not Started |
+| 1 | 1.1-1.5 | Backend setup, MyAir client, REST API | Complete |
 | 2 | 1.6-1.10 | Frontend setup, Dashboard, Zone cards | Not Started |
 | 3 | 1.11-1.12 | Testing & polish | Not Started |
 | 4 | 2.1-2.4 | Temperature history logging & graphs | Not Started |
@@ -90,7 +88,7 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 ## Phase 1: Dashboard MVP (Priority: HIGH)
 
 ### 1.1 Backend Project Setup
-- [ ] Create `backend/` directory structure:
+- [x] Create `backend/` directory structure:
   ```
   backend/
   ├── build.gradle.kts
@@ -111,7 +109,7 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
       │       └── schema.sql
       └── test/
   ```
-- [ ] Create `build.gradle.kts` with Kotlin DSL:
+- [x] Create `build.gradle.kts` with Kotlin DSL:
   - Spring Boot 3.x
   - Spring Boot Web
   - Spring Boot Data JPA
@@ -119,78 +117,78 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
   - SQLite Hibernate dialect
   - Jackson JSON
   - Kotlin Coroutines
-- [ ] Create `settings.gradle.kts` with project name
-- [ ] Create `application.yml`:
+- [x] Create `settings.gradle.kts` with project name
+- [x] Create `application.yml`:
   - `myair.api.base-url: http://192.168.0.10:2025`
   - `myair.api.timeout-ms: 5000`
   - `myair.api.retry-delay-ms: 4000`
   - `spring.datasource.url: jdbc:sqlite:./data/aircon.db`
   - `server.port: 8080`
-- [ ] Create `RwAirconApplication.kt` with `@SpringBootApplication`
-- [ ] Add Gradle wrapper files
+- [x] Create `RwAirconApplication.kt` with `@SpringBootApplication`
+- [x] Add Gradle wrapper files
 
 ### 1.2 MyAir API Client
-- [ ] Create `client/MyAirClient.kt` service class with RestTemplate
-- [ ] Configure HTTP client in `config/RestTemplateConfig.kt`:
+- [x] Create `client/MyAirClient.kt` service class with RestTemplate
+- [x] Configure HTTP client in `config/RestTemplateConfig.kt`:
   - Connection timeout (5s)
   - Read timeout (5s)
-- [ ] Implement `getSystemData(): MyAirResponse` - calls `GET /getSystemData`
-- [ ] Implement `setAircon(command: Map<String, Any>)` - calls `GET /setAircon?json={...}`
-- [ ] Handle URL encoding for JSON commands
-- [ ] Handle empty `{}` response after commands (API returns empty for up to 4s until confirmed)
-- [ ] Create DTOs in `dto/` matching API response:
+- [x] Implement `getSystemData(): MyAirResponse` - calls `GET /getSystemData`
+- [x] Implement `setAircon(command: Map<String, Any>)` - calls `GET /setAircon?json={...}`
+- [x] Handle URL encoding for JSON commands
+- [x] Handle empty `{}` response after commands (API returns empty for up to 4s until confirmed)
+- [x] Create DTOs in `dto/` matching API response:
   - `MyAirResponse.kt` (root)
   - `AirconsWrapper.kt`, `Aircon.kt`, `AirconInfo.kt`
   - `ZoneInfo.kt`
   - `SystemInfo.kt` (including `suburbTemp`, `isValidSuburbTemp`)
-- [ ] Error handling:
+- [x] Error handling:
   - Network timeout -> return cached last-known state with staleness indicator
   - Connection refused -> return cached state
   - Invalid JSON response -> log and return cached state
-- [ ] Create `service/MyAirCacheService.kt` to cache last successful response
+- [x] Create `service/MyAirCacheService.kt` to cache last successful response
 
 ### 1.3 Backend REST API - System Endpoints
-- [ ] Create `controller/SystemController.kt`
-- [ ] `GET /api/system/status` - Current system state
+- [x] Create `controller/SystemController.kt`
+- [x] `GET /api/system/status` - Current system state
   - Response: `{ state, mode, fan, setTemp, myZone, outdoorTemp, isValidOutdoorTemp, filterCleanStatus, airconErrorCode, zones[] }`
-- [ ] `POST /api/system/power` - Turn system on/off
+- [x] `POST /api/system/power` - Turn system on/off
   - Body: `{ "state": "on" | "off" }`
   - Command: `{"ac1":{"info":{"state":"on"}}}`
-- [ ] `POST /api/system/mode` - Set AC mode
+- [x] `POST /api/system/mode` - Set AC mode
   - Body: `{ "mode": "cool" | "heat" | "vent" | "dry" }`
   - Command: `{"ac1":{"info":{"mode":"cool"}}}`
-- [ ] `POST /api/system/fan` - Set fan speed
+- [x] `POST /api/system/fan` - Set fan speed
   - Body: `{ "fan": "low" | "medium" | "high" | "auto" | "autoAA" }`
   - Command: `{"ac1":{"info":{"fan":"high"}}}`
-- [ ] `POST /api/system/temperature` - Set system target (when myZone=0)
+- [x] `POST /api/system/temperature` - Set system target (when myZone=0)
   - Body: `{ "temperature": 16-32 }`
   - Validate range 16-32
   - Command: `{"ac1":{"info":{"setTemp":24}}}`
-- [ ] `POST /api/system/myzone` - Set controlling zone
+- [x] `POST /api/system/myzone` - Set controlling zone
   - Body: `{ "zone": 0-3 }` (0=disabled, 1-3=zone number)
   - Command: `{"ac1":{"info":{"myZone":2}}}`
-- [ ] Create `controller/HealthController.kt`
-- [ ] `GET /api/health` - Health check
+- [x] Create `controller/HealthController.kt`
+- [x] `GET /api/health` - Health check
   - Response: `{ status: "ok" | "degraded", myairConnected: boolean, lastSuccessfulPoll: timestamp }`
-- [ ] Create request/response DTOs in `dto/`
+- [x] Create request/response DTOs in `dto/`
 
 ### 1.4 Backend REST API - Zone Endpoints
-- [ ] Create `controller/ZoneController.kt`
-- [ ] `GET /api/zones` - List all zones
+- [x] Create `controller/ZoneController.kt`
+- [x] `GET /api/zones` - List all zones
   - Response: `[{ id, name, myAirZoneId, state, type, value, setTemp, measuredTemp, rssi, error, isMyZone }]`
-- [ ] `POST /api/zones/{id}/target` - Set zone target temperature
+- [x] `POST /api/zones/{id}/target` - Set zone target temperature
   - Body: `{ "temperature": 16-32 }`
   - Validate range 16-32
   - Map database zone ID to MyAir zone ID (z01, z02, z03)
   - Command: `{"ac1":{"zones":{"z01":{"setTemp":22}}}}`
-- [ ] `POST /api/zones/{id}/power` - Set zone open/close
+- [x] `POST /api/zones/{id}/power` - Set zone open/close
   - Body: `{ "state": "open" | "close" }`
   - Validate zone is not current myZone (cannot close myZone)
   - Command: `{"ac1":{"zones":{"z01":{"state":"open"}}}}`
-- [ ] Create `service/ZoneService.kt` for zone operations
+- [x] Create `service/ZoneService.kt` for zone operations
 
 ### 1.5 Backend Database & Zone Configuration
-- [ ] Create `schema.sql`:
+- [x] Create `schema.sql`:
   ```sql
   CREATE TABLE IF NOT EXISTS zone (
     id INTEGER PRIMARY KEY,
@@ -201,10 +199,10 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
   INSERT OR IGNORE INTO zone (id, name, my_air_zone_id) VALUES (2, 'Guest', 'z02');
   INSERT OR IGNORE INTO zone (id, name, my_air_zone_id) VALUES (3, 'Upstairs', 'z03');
   ```
-- [ ] Create `model/Zone.kt` JPA entity
-- [ ] Create `repository/ZoneRepository.kt` extending JpaRepository
-- [ ] Configure SQLite dialect in `config/SQLiteDialect.kt` or use community dialect
-- [ ] Implement zone ID mapping service: database ID <-> MyAir zone ID
+- [x] Create `model/Zone.kt` JPA entity
+- [x] Create `repository/ZoneRepository.kt` extending JpaRepository
+- [x] Configure SQLite dialect in `config/SQLiteDialect.kt` or use community dialect
+- [x] Implement zone ID mapping service: database ID <-> MyAir zone ID
 
 ### 1.6 Frontend Project Setup
 - [ ] Create `frontend/` directory structure:
