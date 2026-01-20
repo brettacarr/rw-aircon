@@ -15,11 +15,11 @@ This is a greenfield project - no source code exists yet. Implementation proceed
 
 ---
 
-## Project Status: Phase 1 Complete (Dashboard MVP)
+## Project Status: Phase 2 Complete (Temperature History)
 
 **Last Updated:** 2026-01-20
-**Status:** Phase 1 complete. Backend, Frontend, Backend Testing, and Frontend Polish all finished.
-**Next Action:** Begin Phase 2.4 - Frontend History View (backend infrastructure already complete)
+**Status:** Phase 2 complete. Temperature History feature fully implemented (backend and frontend).
+**Next Action:** Begin Phase 3 - Scheduling (seasons, weekly schedules)
 
 **Critical Bug Fixed (2026-01-20):** The `findHourlyAveragesByZoneIdAndTimestampBetween` repository method was missing, causing the backend to fail to compile. This has been fixed.
 
@@ -84,7 +84,7 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 | 1 | 1.1-1.5 | Backend setup, MyAir client, REST API | Complete |
 | 2 | 1.6-1.10 | Frontend setup, Dashboard, Zone cards | Complete |
 | 3 | 1.11-1.12 | Testing & polish | Complete |
-| 4 | 2.1-2.4 | Temperature history logging & graphs | Backend Complete - Frontend Not Started |
+| 4 | 2.1-2.4 | Temperature history logging & graphs | Complete |
 | 5 | 3.1-3.5 | Season-based scheduling system | Not Started |
 | 6 | 4.1-4.4 | Manual override with hold duration | Not Started |
 
@@ -93,264 +93,88 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 ## Phase 1: Dashboard MVP (Priority: HIGH)
 
 ### 1.1 Backend Project Setup
-- [x] Create `backend/` directory structure:
-  ```
-  backend/
-  ├── build.gradle.kts
-  ├── settings.gradle.kts
-  └── src/
-      ├── main/
-      │   ├── kotlin/com/rw/aircon/
-      │   │   ├── RwAirconApplication.kt
-      │   │   ├── config/
-      │   │   ├── controller/
-      │   │   ├── service/
-      │   │   ├── client/
-      │   │   ├── model/
-      │   │   ├── repository/
-      │   │   └── dto/
-      │   └── resources/
-      │       ├── application.yml
-      │       └── schema.sql
-      └── test/
-  ```
-- [x] Create `build.gradle.kts` with Kotlin DSL:
-  - Spring Boot 3.x
-  - Spring Boot Web
-  - Spring Boot Data JPA
-  - SQLite JDBC driver (org.xerial:sqlite-jdbc)
-  - SQLite Hibernate dialect
-  - Jackson JSON
-  - Kotlin Coroutines
-- [x] Create `settings.gradle.kts` with project name
-- [x] Create `application.yml`:
-  - `myair.api.base-url: http://192.168.0.10:2025`
-  - `myair.api.timeout-ms: 5000`
-  - `myair.api.retry-delay-ms: 4000`
-  - `spring.datasource.url: jdbc:sqlite:./data/aircon.db`
-  - `server.port: 8080`
+- [x] Create `backend/` directory structure
+- [x] Create `build.gradle.kts` with Spring Boot, Spring Data JPA, SQLite
+- [x] Create `application.yml` with MyAir API and database configuration
 - [x] Create `RwAirconApplication.kt` with `@SpringBootApplication`
 - [x] Add Gradle wrapper files
 
 ### 1.2 MyAir API Client
-- [x] Create `client/MyAirClient.kt` service class with RestTemplate
-- [x] Configure HTTP client in `config/RestTemplateConfig.kt`:
-  - Connection timeout (5s)
-  - Read timeout (5s)
-- [x] Implement `getSystemData(): MyAirResponse` - calls `GET /getSystemData`
-- [x] Implement `setAircon(command: Map<String, Any>)` - calls `GET /setAircon?json={...}`
-- [x] Handle URL encoding for JSON commands
-- [x] Handle empty `{}` response after commands (API returns empty for up to 4s until confirmed)
-- [x] Create DTOs in `dto/` matching API response:
-  - `MyAirResponse.kt` (root)
-  - `AirconsWrapper.kt`, `Aircon.kt`, `AirconInfo.kt`
-  - `ZoneInfo.kt`
-  - `SystemInfo.kt` (including `suburbTemp`, `isValidSuburbTemp`)
-- [x] Error handling:
-  - Network timeout -> return cached last-known state with staleness indicator
-  - Connection refused -> return cached state
-  - Invalid JSON response -> log and return cached state
-- [x] Create `service/MyAirCacheService.kt` to cache last successful response
+- [x] Create `client/MyAirClient.kt` service with RestTemplate
+- [x] Configure HTTP client with timeouts
+- [x] Implement `getSystemData()` and `setAircon()` methods
+- [x] Create DTOs matching API response structure
+- [x] Error handling with cache fallback
+- [x] Create `service/MyAirCacheService.kt`
 
 ### 1.3 Backend REST API - System Endpoints
 - [x] Create `controller/SystemController.kt`
-- [x] `GET /api/system/status` - Current system state
-  - Response: `{ state, mode, fan, setTemp, myZone, outdoorTemp, isValidOutdoorTemp, filterCleanStatus, airconErrorCode, zones[] }`
-- [x] `POST /api/system/power` - Turn system on/off
-  - Body: `{ "state": "on" | "off" }`
-  - Command: `{"ac1":{"info":{"state":"on"}}}`
-- [x] `POST /api/system/mode` - Set AC mode
-  - Body: `{ "mode": "cool" | "heat" | "vent" | "dry" }`
-  - Command: `{"ac1":{"info":{"mode":"cool"}}}`
-- [x] `POST /api/system/fan` - Set fan speed
-  - Body: `{ "fan": "low" | "medium" | "high" | "auto" | "autoAA" }`
-  - Command: `{"ac1":{"info":{"fan":"high"}}}`
-- [x] `POST /api/system/temperature` - Set system target (when myZone=0)
-  - Body: `{ "temperature": 16-32 }`
-  - Validate range 16-32
-  - Command: `{"ac1":{"info":{"setTemp":24}}}`
-- [x] `POST /api/system/myzone` - Set controlling zone
-  - Body: `{ "zone": 0-3 }` (0=disabled, 1-3=zone number)
-  - Command: `{"ac1":{"info":{"myZone":2}}}`
+- [x] Implement endpoints: status, power, mode, fan, temperature, myzone
 - [x] Create `controller/HealthController.kt`
-- [x] `GET /api/health` - Health check
-  - Response: `{ status: "ok" | "degraded", myairConnected: boolean, lastSuccessfulPoll: timestamp }`
-- [x] Create request/response DTOs in `dto/`
+- [x] Create request/response DTOs
 
 ### 1.4 Backend REST API - Zone Endpoints
 - [x] Create `controller/ZoneController.kt`
-- [x] `GET /api/zones` - List all zones
-  - Response: `[{ id, name, myAirZoneId, state, type, value, setTemp, measuredTemp, rssi, error, isMyZone }]`
-- [x] `POST /api/zones/{id}/target` - Set zone target temperature
-  - Body: `{ "temperature": 16-32 }`
-  - Validate range 16-32
-  - Map database zone ID to MyAir zone ID (z01, z02, z03)
-  - Command: `{"ac1":{"zones":{"z01":{"setTemp":22}}}}`
-- [x] `POST /api/zones/{id}/power` - Set zone open/close
-  - Body: `{ "state": "open" | "close" }`
-  - Validate zone is not current myZone (cannot close myZone)
-  - Command: `{"ac1":{"zones":{"z01":{"state":"open"}}}}`
+- [x] Implement endpoints: list zones, set target temperature, set zone power
 - [x] Create `service/ZoneService.kt` for zone operations
+- [x] Implement zone ID mapping (database ID <-> MyAir zone ID)
 
 ### 1.5 Backend Database & Zone Configuration
-- [x] Create `schema.sql`:
-  ```sql
-  CREATE TABLE IF NOT EXISTS zone (
-    id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL,
-    my_air_zone_id TEXT NOT NULL UNIQUE
-  );
-  INSERT OR IGNORE INTO zone (id, name, my_air_zone_id) VALUES (1, 'Living', 'z01');
-  INSERT OR IGNORE INTO zone (id, name, my_air_zone_id) VALUES (2, 'Guest', 'z02');
-  INSERT OR IGNORE INTO zone (id, name, my_air_zone_id) VALUES (3, 'Upstairs', 'z03');
-  ```
+- [x] Create `schema.sql` with zone table and seed data
 - [x] Create `model/Zone.kt` JPA entity
-- [x] Create `repository/ZoneRepository.kt` extending JpaRepository
-- [x] Configure SQLite dialect in `config/SQLiteDialect.kt` or use community dialect
-- [x] Implement zone ID mapping service: database ID <-> MyAir zone ID
+- [x] Create `repository/ZoneRepository.kt`
+- [x] Configure SQLite dialect
 
 ### 1.6 Frontend Project Setup
-- [x] Create `frontend/` directory structure:
-  ```
-  frontend/
-  ├── package.json
-  ├── tsconfig.json
-  ├── vite.config.ts
-  ├── tailwind.config.js
-  ├── postcss.config.js
-  ├── index.html
-  └── src/
-      ├── main.tsx
-      ├── App.tsx
-      ├── index.css
-      ├── api/
-      ├── components/
-      │   └── ui/
-      ├── pages/
-      ├── hooks/
-      └── types/
-  ```
-- [x] Initialize with `npm create vite@latest frontend -- --template react-ts`
-- [x] Install dependencies:
-  - React, React DOM (included with Vite template)
-  - Tailwind CSS (`tailwindcss`, `postcss`, `autoprefixer`)
-  - ShadCN UI (via `npx shadcn-ui@latest init`)
-  - React Query (`@tanstack/react-query`)
-  - Axios
-- [x] Configure `vite.config.ts` with API proxy to `http://localhost:8080`
-- [x] Configure Tailwind CSS (`tailwind.config.js`, `postcss.config.js`)
-- [x] Initialize ShadCN and install components: Button, Card, Slider, Switch, Select, Badge, Skeleton, Toast
+- [x] Initialize React + TypeScript project with Vite
+- [x] Install and configure Tailwind CSS
+- [x] Install and configure ShadCN UI components
+- [x] Install React Query and Axios
+- [x] Configure Vite API proxy
 
 ### 1.7 Frontend Types & API Layer
-- [x] Create `src/types/index.ts`:
-  - `SystemStatus` interface matching backend response
-  - `Zone` interface with all zone properties
-  - `AcMode = "cool" | "heat" | "vent" | "dry"`
-  - `FanSpeed = "low" | "medium" | "high" | "auto" | "autoAA"`
-  - `ZoneState = "open" | "close"`
-  - `PowerState = "on" | "off"`
-- [x] Create `src/api/client.ts` - Axios instance with base configuration
-- [x] Create `src/api/system.ts`:
-  - `getSystemStatus(): Promise<SystemStatus>`
-  - `setSystemPower(state: PowerState): Promise<void>`
-  - `setSystemMode(mode: AcMode): Promise<void>`
-  - `setFanSpeed(fan: FanSpeed): Promise<void>`
-  - `setSystemTemperature(temp: number): Promise<void>`
-  - `setMyZone(zone: number): Promise<void>`
-- [x] Create `src/api/zones.ts`:
-  - `getZones(): Promise<Zone[]>`
-  - `setZoneTemperature(id: number, temp: number): Promise<void>`
-  - `setZonePower(id: number, state: ZoneState): Promise<void>`
-- [x] Add error handling with user-friendly messages
+- [x] Create TypeScript interfaces for all API types
+- [x] Create Axios client with base configuration
+- [x] Create API functions for system and zone operations
+- [x] Add error handling
 
 ### 1.8 Frontend Dashboard Page
 - [x] Create `src/pages/Dashboard.tsx`
-- [x] System status header section:
-  - System power toggle (Switch component)
-  - Outdoor temperature display (when `isValidOutdoorTemp` is true)
-  - Filter maintenance alert badge (when `filterCleanStatus > 0`)
-  - Error indicator badge (when `airconErrorCode` is set)
-- [x] Mode selector (Select or ToggleGroup):
-  - Options: Cool, Heat, Vent, Dry
-  - Disabled when system is off
-- [x] Fan speed selector:
-  - Options: Low, Medium, High, Auto, AutoAA
-  - Disabled when system is off
-- [x] System temperature control (visible when myZone=0):
-  - Slider or +/- buttons
-  - Range: 16-32 with current value display
-- [x] Zone cards layout (responsive CSS Grid: 1 col mobile, 2 col tablet, 3 col desktop)
-- [x] Loading skeleton while fetching
-- [x] Error state with retry button
-- [x] Set up page routing in `App.tsx`
+- [x] Implement system status header with controls
+- [x] Add mode and fan speed selectors
+- [x] Add system temperature control
+- [x] Implement responsive zone cards layout
+- [x] Add loading and error states
 
 ### 1.9 Frontend Zone Cards
 - [x] Create `src/components/ZoneCard.tsx`
-- [x] Display zone name prominently
-- [x] Display current temperature (`measuredTemp`) with unit indicator
-- [x] Target temperature control:
-  - Slider or +/- buttons
-  - Range: 16-32
-  - Shows current `setTemp`
-  - Disabled when zone is closed
-- [x] Zone open/close toggle (Switch):
-  - Disabled when zone is myZone (cannot close controlling zone)
-  - Show tooltip explaining why disabled
-- [x] MyZone indicator badge (highlight controlling zone)
-- [x] Visual styling: muted/dimmed appearance when closed
-- [x] Optional: Signal strength indicator (`rssi`)
-- [x] Optional: Error indicator when `zone.error > 0`
+- [x] Display zone name and temperatures
+- [x] Add target temperature control
+- [x] Add zone open/close toggle
+- [x] Show MyZone indicator
+- [x] Add signal strength and error indicators
 
 ### 1.10 Frontend State Management & Hooks
-- [x] Create `src/hooks/useSystemStatus.ts` - React Query hook for system status
-- [x] Create `src/hooks/useZones.ts` - React Query hook for zones
-- [x] Create `src/hooks/useMutations.ts` - Mutation hooks for all commands
-- [x] Set up React Query provider in `main.tsx`
-- [x] Configure polling:
-  - Refetch interval: 10 seconds
-  - Stale time: 5 seconds
-- [x] Implement optimistic updates for better UX:
-  - Immediately update UI on command
-  - Revert on error
-- [x] Toast notifications:
-  - Success: "Temperature updated", "Mode changed", etc.
-  - Error: "Failed to update. Please try again."
-- [x] Loading states: Disable controls while mutation is pending
+- [x] Create React Query hooks for data fetching
+- [x] Create mutation hooks for all commands
+- [x] Configure polling (10s refetch, 5s stale time)
+- [x] Implement optimistic updates
+- [x] Add toast notifications
 
 ### 1.11 Backend Testing
-- [x] Unit tests for `MyAirClient`:
-  - Mock HTTP responses
-  - Test successful data parsing
-  - Test timeout handling
-  - Test connection refused handling
-  - Test invalid JSON handling
-- [x] Unit tests for services:
-  - `ZoneService` zone mapping logic
-  - Temperature validation (16-32 range)
-- [x] Integration tests for REST endpoints (partial - unit tests with mocks, not full integration tests):
-  - Test with mock MyAir responses using `@MockBean`
-  - Verify correct command structure sent to API
-- [x] Test with sample response from `docs/myapi-response.json`
-- [x] Add test configuration in `application-test.yml`
-
-**Note:** 32 unit tests added covering MyAirClient, SystemService, and ZoneService.
+- [x] Unit tests for MyAirClient
+- [x] Unit tests for services
+- [x] Controller tests with mocked dependencies
+- [x] Add test configuration
 
 ### 1.12 Frontend Testing & Polish
 - [x] Configure ESLint with TypeScript rules
-  - Updated eslint.config.js with ShadCN variant function allowlist
-- [x] Enable TypeScript strict mode in `tsconfig.json`
-  - Already enabled with additional lint checks (noUnusedLocals, noUnusedParameters, etc.)
-- [x] Verify responsive design on mobile, tablet, desktop
-  - Grid layouts use responsive classes (sm:, md:, lg:)
-- [x] Test production build: `npm run build`
-  - Builds successfully, outputs to dist/
-- [x] Verify API proxy works in development
-  - Configured in vite.config.ts to proxy /api to localhost:8080
-- [x] Test all controls with polling updates (no race conditions)
-  - React Query configured with 10s refetch interval, 5s stale time
-  - Mutations invalidate queries on success
-- [x] Accessibility: keyboard navigation, screen reader labels
-  - aria-label attributes on all interactive elements (Switch, Button)
+- [x] Enable TypeScript strict mode
+- [x] Verify responsive design
+- [x] Test production build
+- [x] Verify API proxy
+- [x] Test polling updates
+- [x] Ensure accessibility features
 
 ---
 
@@ -389,16 +213,18 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 - [x] Create DTOs for history responses
 
 ### 2.4 Frontend History View
-- [ ] Install charting library: Recharts
-- [ ] Create `src/pages/History.tsx` or add section to Dashboard
-- [ ] Create `src/components/TemperatureChart.tsx`:
+- [x] Install charting library: Recharts
+- [x] Create `src/pages/History.tsx` or add section to Dashboard
+- [x] Create `src/components/TemperatureChart.tsx`:
   - Line chart: current temp vs time (solid line)
   - Overlay: target temp line (dashed line, different color)
   - Visual indication of zone on/off periods (background shading)
-- [ ] Time range selector: 24h, 7d, 30d, custom date picker
-- [ ] Zone selector dropdown to switch between zones
-- [ ] Outdoor temperature overlay toggle
-- [ ] Add navigation between Dashboard and History
+- [x] Time range selector: 24h, 7d, 30d (custom date picker deferred)
+- [x] Zone selector dropdown to switch between zones
+- [x] Outdoor temperature overlay toggle
+- [x] Add navigation between Dashboard and History
+
+**Note:** Custom date picker deferred to future enhancement. Current implementation supports 24h, 7d, and 30d preset ranges.
 
 ### 2.5 Diagnostics View (Optional Enhancement)
 - [ ] Create `src/pages/Diagnostics.tsx` or modal component
