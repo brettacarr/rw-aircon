@@ -1,7 +1,6 @@
 package com.rw.aircon
 
 import com.rw.aircon.config.MyAirProperties
-import com.rw.aircon.config.TemperatureLoggingProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
@@ -9,7 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling
 
 @SpringBootApplication
 @EnableScheduling
-@EnableConfigurationProperties(MyAirProperties::class, TemperatureLoggingProperties::class)
+@EnableConfigurationProperties(MyAirProperties::class)
 class RwAirconApplication
 
 fun main(args: Array<String>) {
