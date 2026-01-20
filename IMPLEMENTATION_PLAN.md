@@ -15,13 +15,13 @@ This is a greenfield project - no source code exists yet. Implementation proceed
 
 ---
 
-## Project Status: Phase 1.1-1.5 Complete (Backend)
+## Project Status: Phase 1.1-1.10 Complete (Backend + Frontend)
 
 **Last Updated:** 2026-01-20
-**Status:** Backend implementation complete. Ready for frontend development.
-**Next Action:** Begin Phase 1.6 - Frontend Project Setup
+**Status:** Backend and Frontend implementation complete. Ready for testing phase.
+**Next Action:** Begin Phase 1.11 - Backend Testing
 
-Backend foundation is complete with Kotlin/Spring Boot REST API, MyAir client integration, and SQLite database.
+Backend foundation is complete with Kotlin/Spring Boot REST API, MyAir client integration, and SQLite database. Frontend is complete with React/TypeScript dashboard, zone cards, and state management.
 
 ### Verification Performed
 - Backend builds successfully with `./gradlew build`
@@ -77,7 +77,7 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 | Priority | Phase | Description | Status |
 |----------|-------|-------------|--------|
 | 1 | 1.1-1.5 | Backend setup, MyAir client, REST API | Complete |
-| 2 | 1.6-1.10 | Frontend setup, Dashboard, Zone cards | Not Started |
+| 2 | 1.6-1.10 | Frontend setup, Dashboard, Zone cards | Complete |
 | 3 | 1.11-1.12 | Testing & polish | Not Started |
 | 4 | 2.1-2.4 | Temperature history logging & graphs | Not Started |
 | 5 | 3.1-3.5 | Season-based scheduling system | Not Started |
@@ -205,7 +205,7 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 - [x] Implement zone ID mapping service: database ID <-> MyAir zone ID
 
 ### 1.6 Frontend Project Setup
-- [ ] Create `frontend/` directory structure:
+- [x] Create `frontend/` directory structure:
   ```
   frontend/
   ├── package.json
@@ -225,92 +225,92 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
       ├── hooks/
       └── types/
   ```
-- [ ] Initialize with `npm create vite@latest frontend -- --template react-ts`
-- [ ] Install dependencies:
+- [x] Initialize with `npm create vite@latest frontend -- --template react-ts`
+- [x] Install dependencies:
   - React, React DOM (included with Vite template)
   - Tailwind CSS (`tailwindcss`, `postcss`, `autoprefixer`)
   - ShadCN UI (via `npx shadcn-ui@latest init`)
   - React Query (`@tanstack/react-query`)
   - Axios
-- [ ] Configure `vite.config.ts` with API proxy to `http://localhost:8080`
-- [ ] Configure Tailwind CSS (`tailwind.config.js`, `postcss.config.js`)
-- [ ] Initialize ShadCN and install components: Button, Card, Slider, Switch, Select, Badge, Skeleton, Toast
+- [x] Configure `vite.config.ts` with API proxy to `http://localhost:8080`
+- [x] Configure Tailwind CSS (`tailwind.config.js`, `postcss.config.js`)
+- [x] Initialize ShadCN and install components: Button, Card, Slider, Switch, Select, Badge, Skeleton, Toast
 
 ### 1.7 Frontend Types & API Layer
-- [ ] Create `src/types/index.ts`:
+- [x] Create `src/types/index.ts`:
   - `SystemStatus` interface matching backend response
   - `Zone` interface with all zone properties
   - `AcMode = "cool" | "heat" | "vent" | "dry"`
   - `FanSpeed = "low" | "medium" | "high" | "auto" | "autoAA"`
   - `ZoneState = "open" | "close"`
   - `PowerState = "on" | "off"`
-- [ ] Create `src/api/client.ts` - Axios instance with base configuration
-- [ ] Create `src/api/system.ts`:
+- [x] Create `src/api/client.ts` - Axios instance with base configuration
+- [x] Create `src/api/system.ts`:
   - `getSystemStatus(): Promise<SystemStatus>`
   - `setSystemPower(state: PowerState): Promise<void>`
   - `setSystemMode(mode: AcMode): Promise<void>`
   - `setFanSpeed(fan: FanSpeed): Promise<void>`
   - `setSystemTemperature(temp: number): Promise<void>`
   - `setMyZone(zone: number): Promise<void>`
-- [ ] Create `src/api/zones.ts`:
+- [x] Create `src/api/zones.ts`:
   - `getZones(): Promise<Zone[]>`
   - `setZoneTemperature(id: number, temp: number): Promise<void>`
   - `setZonePower(id: number, state: ZoneState): Promise<void>`
-- [ ] Add error handling with user-friendly messages
+- [x] Add error handling with user-friendly messages
 
 ### 1.8 Frontend Dashboard Page
-- [ ] Create `src/pages/Dashboard.tsx`
-- [ ] System status header section:
+- [x] Create `src/pages/Dashboard.tsx`
+- [x] System status header section:
   - System power toggle (Switch component)
   - Outdoor temperature display (when `isValidOutdoorTemp` is true)
   - Filter maintenance alert badge (when `filterCleanStatus > 0`)
   - Error indicator badge (when `airconErrorCode` is set)
-- [ ] Mode selector (Select or ToggleGroup):
+- [x] Mode selector (Select or ToggleGroup):
   - Options: Cool, Heat, Vent, Dry
   - Disabled when system is off
-- [ ] Fan speed selector:
+- [x] Fan speed selector:
   - Options: Low, Medium, High, Auto, AutoAA
   - Disabled when system is off
-- [ ] System temperature control (visible when myZone=0):
+- [x] System temperature control (visible when myZone=0):
   - Slider or +/- buttons
   - Range: 16-32 with current value display
-- [ ] Zone cards layout (responsive CSS Grid: 1 col mobile, 2 col tablet, 3 col desktop)
-- [ ] Loading skeleton while fetching
-- [ ] Error state with retry button
-- [ ] Set up page routing in `App.tsx`
+- [x] Zone cards layout (responsive CSS Grid: 1 col mobile, 2 col tablet, 3 col desktop)
+- [x] Loading skeleton while fetching
+- [x] Error state with retry button
+- [x] Set up page routing in `App.tsx`
 
 ### 1.9 Frontend Zone Cards
-- [ ] Create `src/components/ZoneCard.tsx`
-- [ ] Display zone name prominently
-- [ ] Display current temperature (`measuredTemp`) with unit indicator
-- [ ] Target temperature control:
+- [x] Create `src/components/ZoneCard.tsx`
+- [x] Display zone name prominently
+- [x] Display current temperature (`measuredTemp`) with unit indicator
+- [x] Target temperature control:
   - Slider or +/- buttons
   - Range: 16-32
   - Shows current `setTemp`
   - Disabled when zone is closed
-- [ ] Zone open/close toggle (Switch):
+- [x] Zone open/close toggle (Switch):
   - Disabled when zone is myZone (cannot close controlling zone)
   - Show tooltip explaining why disabled
-- [ ] MyZone indicator badge (highlight controlling zone)
-- [ ] Visual styling: muted/dimmed appearance when closed
-- [ ] Optional: Signal strength indicator (`rssi`)
-- [ ] Optional: Error indicator when `zone.error > 0`
+- [x] MyZone indicator badge (highlight controlling zone)
+- [x] Visual styling: muted/dimmed appearance when closed
+- [x] Optional: Signal strength indicator (`rssi`)
+- [x] Optional: Error indicator when `zone.error > 0`
 
 ### 1.10 Frontend State Management & Hooks
-- [ ] Create `src/hooks/useSystemStatus.ts` - React Query hook for system status
-- [ ] Create `src/hooks/useZones.ts` - React Query hook for zones
-- [ ] Create `src/hooks/useMutations.ts` - Mutation hooks for all commands
-- [ ] Set up React Query provider in `main.tsx`
-- [ ] Configure polling:
+- [x] Create `src/hooks/useSystemStatus.ts` - React Query hook for system status
+- [x] Create `src/hooks/useZones.ts` - React Query hook for zones
+- [x] Create `src/hooks/useMutations.ts` - Mutation hooks for all commands
+- [x] Set up React Query provider in `main.tsx`
+- [x] Configure polling:
   - Refetch interval: 10 seconds
   - Stale time: 5 seconds
-- [ ] Implement optimistic updates for better UX:
+- [x] Implement optimistic updates for better UX:
   - Immediately update UI on command
   - Revert on error
-- [ ] Toast notifications:
+- [x] Toast notifications:
   - Success: "Temperature updated", "Mode changed", etc.
   - Error: "Failed to update. Please try again."
-- [ ] Loading states: Disable controls while mutation is pending
+- [x] Loading states: Disable controls while mutation is pending
 
 ### 1.11 Backend Testing
 - [ ] Unit tests for `MyAirClient`:

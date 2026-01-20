@@ -19,6 +19,12 @@ npm run dev            # Dev server (port 5173)
 npm run build          # Production build
 ```
 
+**Note:** If asdf shims are broken, use Homebrew Node directly:
+```bash
+PATH="/opt/homebrew/Cellar/node/25.3.0/bin:$PATH" npm install
+PATH="/opt/homebrew/Cellar/node/25.3.0/bin:$PATH" npm run build
+```
+
 ## Validation
 
 - Backend tests: `cd backend && ./gradlew test`
