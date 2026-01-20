@@ -15,13 +15,13 @@ This is a greenfield project - no source code exists yet. Implementation proceed
 
 ---
 
-## Project Status: Phase 1.1-1.10 Complete (Backend + Frontend)
+## Project Status: Phase 1.1-1.11 Complete (Backend + Frontend + Tests)
 
 **Last Updated:** 2026-01-20
-**Status:** Backend and Frontend implementation complete. Ready for testing phase.
-**Next Action:** Begin Phase 1.11 - Backend Testing
+**Status:** Backend, Frontend, and Backend Testing complete. 32 unit tests added covering MyAirClient, SystemService, and ZoneService.
+**Next Action:** Begin Phase 1.12 - Frontend Testing & Polish
 
-Backend foundation is complete with Kotlin/Spring Boot REST API, MyAir client integration, and SQLite database. Frontend is complete with React/TypeScript dashboard, zone cards, and state management.
+Backend foundation is complete with Kotlin/Spring Boot REST API, MyAir client integration, and SQLite database. Frontend is complete with React/TypeScript dashboard, zone cards, and state management. Backend testing is complete with comprehensive unit test coverage.
 
 ### Verification Performed
 - Backend builds successfully with `./gradlew build`
@@ -78,7 +78,7 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 |----------|-------|-------------|--------|
 | 1 | 1.1-1.5 | Backend setup, MyAir client, REST API | Complete |
 | 2 | 1.6-1.10 | Frontend setup, Dashboard, Zone cards | Complete |
-| 3 | 1.11-1.12 | Testing & polish | Not Started |
+| 3 | 1.11-1.12 | Testing & polish | In Progress (1.11 Complete) |
 | 4 | 2.1-2.4 | Temperature history logging & graphs | Not Started |
 | 5 | 3.1-3.5 | Season-based scheduling system | Not Started |
 | 6 | 4.1-4.4 | Manual override with hold duration | Not Started |
@@ -313,20 +313,22 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 - [x] Loading states: Disable controls while mutation is pending
 
 ### 1.11 Backend Testing
-- [ ] Unit tests for `MyAirClient`:
+- [x] Unit tests for `MyAirClient`:
   - Mock HTTP responses
   - Test successful data parsing
   - Test timeout handling
   - Test connection refused handling
   - Test invalid JSON handling
-- [ ] Unit tests for services:
+- [x] Unit tests for services:
   - `ZoneService` zone mapping logic
   - Temperature validation (16-32 range)
-- [ ] Integration tests for REST endpoints:
+- [x] Integration tests for REST endpoints (partial - unit tests with mocks, not full integration tests):
   - Test with mock MyAir responses using `@MockBean`
   - Verify correct command structure sent to API
-- [ ] Test with sample response from `docs/myapi-response.json`
-- [ ] Add test configuration in `application-test.yml`
+- [x] Test with sample response from `docs/myapi-response.json`
+- [x] Add test configuration in `application-test.yml`
+
+**Note:** 32 unit tests added covering MyAirClient, SystemService, and ZoneService.
 
 ### 1.12 Frontend Testing & Polish
 - [ ] Configure ESLint with TypeScript rules
