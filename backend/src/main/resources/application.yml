@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: rw-aircon
+  datasource:
+    url: jdbc:sqlite:./data/aircon.db
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+
+server:
+  port: 8080
+
+myair:
+  api:
+    base-url: http://192.168.0.10:2025
+    timeout-ms: 5000
+    retry-delay-ms: 4000
+
+logging:
+  level:
+    com.rw.aircon: DEBUG
+    org.hibernate.SQL: WARN
