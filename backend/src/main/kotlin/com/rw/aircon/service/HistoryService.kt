@@ -46,7 +46,9 @@ class HistoryService(
         val data = if (useAggregation) {
             // Get hourly averages for longer time ranges
             log.debug("Using hourly aggregation for zone {} history ({} days)", zoneId, daysDiff)
-            val hourlyData = temperatureLogRepository.findHourlyAveragesByZoneIdAndTimestampBetween(zoneId, from, to)
+            val hourlyData = temperatureLogRepository.findHourlyAveragesByZoneIdAndTimestampBetween(
+                zoneId, from.toString(), to.toString()
+            )
             hourlyData.map { avg ->
                 TemperatureLogResponse(
                     timestamp = avg.hour,
