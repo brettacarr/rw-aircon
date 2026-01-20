@@ -19,5 +19,12 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Allow ShadCN UI components to export variant functions alongside components
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowExportNames: ['badgeVariants', 'buttonVariants'] },
+      ],
+    },
   },
 ])
