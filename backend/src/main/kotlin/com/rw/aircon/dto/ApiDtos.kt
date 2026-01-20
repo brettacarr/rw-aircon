@@ -72,6 +72,37 @@ data class HealthResponse(
     val lastSuccessfulPoll: String?         // ISO timestamp or null
 )
 
+// ============ History DTOs ============
+
+data class TemperatureLogResponse(
+    val timestamp: String,              // ISO timestamp
+    val currentTemp: Double,
+    val targetTemp: Double,
+    val zoneEnabled: Boolean
+)
+
+data class SystemLogResponse(
+    val timestamp: String,              // ISO timestamp
+    val mode: String,
+    val outdoorTemp: Double?,
+    val systemOn: Boolean
+)
+
+data class ZoneHistoryResponse(
+    val zoneId: Int,
+    val zoneName: String,
+    val from: String,                   // ISO timestamp
+    val to: String,                     // ISO timestamp
+    val aggregated: Boolean,            // true if hourly averages
+    val data: List<TemperatureLogResponse>
+)
+
+data class SystemHistoryResponse(
+    val from: String,                   // ISO timestamp
+    val to: String,                     // ISO timestamp
+    val data: List<SystemLogResponse>
+)
+
 // ============ Error DTOs ============
 
 data class ErrorResponse(

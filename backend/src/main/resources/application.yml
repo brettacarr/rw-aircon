@@ -23,6 +23,11 @@ myair:
     timeout-ms: 5000
     retry-delay-ms: 4000
 
+# Temperature history logging configuration
+temperature-logging:
+  interval-minutes: 5
+  retention-days: 90
+
 logging:
   level:
     com.rw.aircon: DEBUG
