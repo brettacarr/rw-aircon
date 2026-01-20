@@ -22,8 +22,13 @@ import {
   RefreshCw,
   Minus,
   Plus,
+  ChartLine,
 } from "lucide-react"
 import type { AcMode, FanSpeed } from "@/types"
+
+interface DashboardProps {
+  onNavigateToHistory?: () => void
+}
 
 const MODE_OPTIONS: { value: AcMode; label: string }[] = [
   { value: "cool", label: "Cool" },
@@ -40,7 +45,7 @@ const FAN_OPTIONS: { value: FanSpeed; label: string }[] = [
   { value: "autoAA", label: "Auto AA" },
 ]
 
-export function Dashboard() {
+export function Dashboard({ onNavigateToHistory }: DashboardProps) {
   const { data, isLoading, isError, error, refetch } = useSystemStatus()
 
   const setSystemPower = useSetSystemPower()
@@ -95,7 +100,20 @@ export function Dashboard() {
     <div className="container mx-auto p-4 space-y-6">
       {/* Header with System Status */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold">Air Conditioning</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold">Air Conditioning</h1>
+          {onNavigateToHistory && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onNavigateToHistory}
+              aria-label="View temperature history"
+            >
+              <ChartLine className="h-4 w-4 mr-2" />
+              History
+            </Button>
+          )}
+        </div>
         <div className="flex items-center gap-4">
           {/* Outdoor Temperature */}
           {data.isValidOutdoorTemp && data.outdoorTemp !== undefined && (
