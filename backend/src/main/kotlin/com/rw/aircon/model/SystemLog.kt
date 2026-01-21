@@ -1,5 +1,6 @@
 package com.rw.aircon.model
 
+import com.rw.aircon.config.InstantConverter
 import jakarta.persistence.*
 import java.time.Instant
 
@@ -17,6 +18,7 @@ data class SystemLog(
     val id: Long = 0,
 
     @Column(nullable = false)
+    @Convert(converter = InstantConverter::class)
     val timestamp: Instant = Instant.now(),
 
     @Column(nullable = false)
