@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
+import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -58,8 +59,9 @@ class MyAirClient(
 
             log.debug("Sending command to MyAir: {}", jsonCommand)
 
-            // The API returns {} until the hardware confirms (up to 4 seconds)
-            val response = restTemplate.getForObject(url, String::class.java)
+            // Use URI object to prevent RestTemplate from double-encoding the URL
+            val uri = URI.create(url)
+            val response = restTemplate.getForObject(uri, String::class.java)
             log.debug("Command response: {}", response)
 
             true

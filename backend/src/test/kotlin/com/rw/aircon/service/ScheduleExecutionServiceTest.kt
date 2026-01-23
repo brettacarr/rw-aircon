@@ -303,9 +303,9 @@ class ScheduleExecutionServiceTest {
         scheduleExecutionService.applyScheduleSettings(entry)
 
         // Then
-        verify(myAirClient).setZone("z01", mapOf("setTemp" to 22))
+        verify(myAirClient).setZone("z01", mapOf("setTemp" to "22"))
         verify(myAirClient).setZone("z01", mapOf("state" to "open"))
-        verify(myAirClient).setZone("z02", mapOf("setTemp" to 24))
+        verify(myAirClient).setZone("z02", mapOf("setTemp" to "24"))
         verify(myAirClient).setZone("z02", mapOf("state" to "open"))
     }
 
@@ -331,7 +331,7 @@ class ScheduleExecutionServiceTest {
         scheduleExecutionService.applyScheduleSettings(entry)
 
         // Then - Should set temperature but NOT close the zone (because it's myZone)
-        verify(myAirClient).setZone("z03", mapOf("setTemp" to 22))
+        verify(myAirClient).setZone("z03", mapOf("setTemp" to "22"))
         verify(myAirClient, never()).setZone("z03", mapOf("state" to "close"))
     }
 
@@ -355,7 +355,7 @@ class ScheduleExecutionServiceTest {
         scheduleExecutionService.applyScheduleSettings(entry)
 
         // Then - Only zone 1 commands should be issued
-        verify(myAirClient).setZone("z01", mapOf("setTemp" to 22))
+        verify(myAirClient).setZone("z01", mapOf("setTemp" to "22"))
         verify(myAirClient).setZone("z01", mapOf("state" to "open"))
         verify(myAirClient, never()).setZone(eq("z999"), any())
     }

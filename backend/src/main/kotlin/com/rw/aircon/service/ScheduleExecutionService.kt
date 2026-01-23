@@ -199,7 +199,7 @@ class ScheduleExecutionService(
     private fun applyZoneSettings(myAirZoneId: String, zoneSchedule: ZoneSchedule) {
         // Set zone temperature
         try {
-            val tempResult = myAirClient.setZone(myAirZoneId, mapOf("setTemp" to zoneSchedule.targetTemp))
+            val tempResult = myAirClient.setZone(myAirZoneId, mapOf("setTemp" to zoneSchedule.targetTemp.toString()))
             if (tempResult) {
                 log.debug("Set zone {} temperature to: {}", myAirZoneId, zoneSchedule.targetTemp)
             } else {

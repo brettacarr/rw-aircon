@@ -3,7 +3,8 @@
     "allow": [
       "Bash(./gradlew compileKotlin:*)",
       "Bash(./gradlew bootRun:*)",
-      "Bash(./gradlew test:*)"
+      "Bash(./gradlew test:*)",
+      "WebSearch"
     ]
   }
 }

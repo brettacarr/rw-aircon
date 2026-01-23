@@ -93,7 +93,7 @@ class ZoneServiceTest {
 
         // Then
         assertTrue(result)
-        verify(myAirClient).setZone("z01", mapOf("setTemp" to 22))
+        verify(myAirClient).setZone("z01", mapOf("setTemp" to "22"))
     }
 
     @Test

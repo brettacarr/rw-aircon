@@ -84,7 +84,7 @@ class ZoneService(
             ?: throw IllegalStateException("Zone with ID $id not found")
 
         log.info("Setting zone {} ({}) temperature to {}", id, zone.myAirZoneId, temperature)
-        return myAirClient.setZone(zone.myAirZoneId, mapOf("setTemp" to temperature))
+        return myAirClient.setZone(zone.myAirZoneId, mapOf("setTemp" to temperature.toString()))
     }
 
     /**

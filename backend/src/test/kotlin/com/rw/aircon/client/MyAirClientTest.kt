@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
+import java.net.URI
 
 @ExtendWith(MockitoExtension::class)
 class MyAirClientTest {
@@ -88,7 +89,7 @@ class MyAirClientTest {
     fun `setAircon returns true when command succeeds`() {
         // Given
         whenever(restTemplate.getForObject(
-            argThat<String> { contains("/setAircon?json=") },
+            argThat<URI> { toString().contains("/setAircon?json=") },
             eq(String::class.java)
         )).thenReturn("{}")
 
@@ -99,7 +100,7 @@ class MyAirClientTest {
         // Then
         assertTrue(result)
         verify(restTemplate).getForObject(
-            argThat<String> { contains("setAircon") },
+            argThat<URI> { toString().contains("setAircon") },
             eq(String::class.java)
         )
     }
@@ -108,7 +109,7 @@ class MyAirClientTest {
     fun `setAircon returns false when RestClientException occurs`() {
         // Given
         whenever(restTemplate.getForObject(
-            any<String>(),
+            any<URI>(),
             eq(String::class.java)
         )).thenThrow(RestClientException("Connection refused"))
 
@@ -124,7 +125,7 @@ class MyAirClientTest {
     fun `setSystemInfo sends correct command structure`() {
         // Given
         whenever(restTemplate.getForObject(
-            any<String>(),
+            any<URI>(),
             eq(String::class.java)
         )).thenReturn("{}")
 
@@ -134,8 +135,9 @@ class MyAirClientTest {
         // Then
         assertTrue(result)
         verify(restTemplate).getForObject(
-            argThat<String> {
-                contains("ac1") && contains("info") && contains("state") && contains("mode")
+            argThat<URI> {
+                val url = toString()
+                url.contains("ac1") && url.contains("info") && url.contains("state") && url.contains("mode")
             },
             eq(String::class.java)
         )
@@ -145,18 +147,19 @@ class MyAirClientTest {
     fun `setZone sends correct command structure`() {
         // Given
         whenever(restTemplate.getForObject(
-            any<String>(),
+            any<URI>(),
             eq(String::class.java)
         )).thenReturn("{}")
 
         // When
-        val result = myAirClient.setZone("z01", mapOf("setTemp" to 22))
+        val result = myAirClient.setZone("z01", mapOf("setTemp" to "22"))
 
         // Then
         assertTrue(result)
         verify(restTemplate).getForObject(
-            argThat<String> {
-                contains("ac1") && contains("zones") && contains("z01") && contains("setTemp")
+            argThat<URI> {
+                val url = toString()
+                url.contains("ac1") && url.contains("zones") && url.contains("z01") && url.contains("setTemp")
             },
             eq(String::class.java)
         )
@@ -166,7 +169,7 @@ class MyAirClientTest {
     fun `setAircon URL encodes the JSON command`() {
         // Given
         whenever(restTemplate.getForObject(
-            any<String>(),
+            any<URI>(),
             eq(String::class.java)
         )).thenReturn("{}")
 
@@ -175,8 +178,9 @@ class MyAirClientTest {
 
         // Then - Verify URL contains encoded JSON (no raw braces in query param)
         verify(restTemplate).getForObject(
-            argThat<String> {
-                contains("/setAircon?json=") && contains("%7B") // %7B is encoded {
+            argThat<URI> {
+                val url = toString()
+                url.contains("/setAircon?json=") && url.contains("%7B") // %7B is encoded {
             },
             eq(String::class.java)
         )
