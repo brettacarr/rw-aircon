@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gradle wrapper:*)",
+      "Bash(brew list:*)",
+      "Bash(java:*)",
+      "Bash(/usr/libexec/java_home:*)",
+      "Bash(chmod:*)",
+      "Bash(node --version:*)",
+      "Bash(npm --version)",
+      "Bash(/usr/local/bin/node:*)",
+      "Bash(/opt/homebrew/bin/node:*)",
+      "Bash(curl:*)",
+      "Bash(sqlite3:*)",
+      "Bash(python3:*)",
+      "Bash(pkill:*)"
+    ]
+  }
+}

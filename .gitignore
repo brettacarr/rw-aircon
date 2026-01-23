@@ -1,3 +1,6 @@
+#OS files
+*.DS_Store
+
 # Compiled class file
 *.class
 
@@ -35,10 +38,6 @@ build/
 .idea/
 *.iml
 .vscode/
-
-# SQLite database
-*.db
-data/
 
 # Node.js
 node_modules/
