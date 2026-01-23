@@ -4,6 +4,7 @@ import com.rw.aircon.client.MyAirClient
 import com.rw.aircon.model.ScheduleEntry
 import com.rw.aircon.model.Season
 import com.rw.aircon.model.ZoneSchedule
+import com.rw.aircon.repository.OverrideRepository
 import com.rw.aircon.repository.ScheduleEntryRepository
 import com.rw.aircon.repository.SeasonRepository
 import com.rw.aircon.repository.ZoneRepository
@@ -11,6 +12,7 @@ import com.rw.aircon.repository.ZoneScheduleRepository
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.MonthDay
@@ -22,10 +24,11 @@ import java.time.MonthDay
  * If so, applies the configured mode and zone settings to the MyAir system.
  *
  * Schedule evaluation logic:
- * 1. Find active season(s) matching today's date
- * 2. Select highest priority season if multiple match
- * 3. Find schedule entry for current day-of-week and time
- * 4. Apply mode and per-zone settings from the entry
+ * 1. Check for active override - if present, skip schedule execution
+ * 2. Find active season(s) matching today's date
+ * 3. Select highest priority season if multiple match
+ * 4. Find schedule entry for current day-of-week and time
+ * 5. Apply mode and per-zone settings from the entry
  */
 @Service
 class ScheduleExecutionService(
@@ -33,6 +36,7 @@ class ScheduleExecutionService(
     private val scheduleEntryRepository: ScheduleEntryRepository,
     private val zoneScheduleRepository: ZoneScheduleRepository,
     private val zoneRepository: ZoneRepository,
+    private val overrideRepository: OverrideRepository,
     private val myAirClient: MyAirClient,
     private val myAirCacheService: MyAirCacheService
 ) {
@@ -51,6 +55,14 @@ class ScheduleExecutionService(
     @Scheduled(cron = "0 * * * * *") // Every minute at :00 seconds
     fun evaluateAndApplySchedule() {
         try {
+            // Check for active override first - if present, skip schedule execution
+            val activeOverride = overrideRepository.findActiveOverride(Instant.now())
+            if (activeOverride != null) {
+                log.debug("Active override present (expires at {}), skipping schedule execution",
+                    activeOverride.expiresAt)
+                return
+            }
+
             val now = LocalDate.now()
             val currentTime = LocalTime.now()
             val dayOfWeek = now.dayOfWeek.value // 1=Monday, 7=Sunday
@@ -261,4 +273,11 @@ class ScheduleExecutionService(
      * Gets the ID of the last applied schedule entry.
      */
     fun getLastAppliedEntryId(): Long? = lastAppliedEntryId
+
+    /**
+     * Check if schedule execution is currently blocked by an override.
+     */
+    fun isBlockedByOverride(): Boolean {
+        return overrideRepository.findActiveOverride(Instant.now()) != null
+    }
 }

@@ -8,6 +8,7 @@ import {
   useSetZonePower,
 } from "@/hooks/useMutations"
 import { ZoneCard } from "@/components/ZoneCard"
+import { OverrideBanner } from "@/components/OverrideBanner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -100,6 +101,9 @@ export function Dashboard({ onNavigateToHistory, onNavigateToSchedules }: Dashbo
 
   return (
     <div className="container mx-auto p-4 space-y-6">
+      {/* Override Banner - shows when manual override is active */}
+      <OverrideBanner />
+
       {/* Header with System Status */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">

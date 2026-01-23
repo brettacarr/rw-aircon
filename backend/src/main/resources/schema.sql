@@ -76,3 +76,17 @@ CREATE TABLE IF NOT EXISTS zone_schedule (
 
 -- Index for zone_schedule
 CREATE INDEX IF NOT EXISTS idx_zone_schedule_entry ON zone_schedule(schedule_entry_id);
+
+-- Override table for temporary manual overrides of scheduled settings
+-- Only one override should be active at a time; old overrides are cleaned up automatically
+CREATE TABLE IF NOT EXISTS override (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    mode TEXT,
+    system_temp INTEGER,
+    zone_overrides TEXT
+);
+
+-- Index for finding active overrides efficiently
+CREATE INDEX IF NOT EXISTS idx_override_expires_at ON override(expires_at);

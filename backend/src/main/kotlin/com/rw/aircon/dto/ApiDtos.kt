@@ -177,6 +177,46 @@ data class FullScheduleUpdateRequest(
     val entries: List<ScheduleEntryRequest>
 )
 
+// ============ Override DTOs ============
+
+/**
+ * Response representing the current active override (if any).
+ */
+data class OverrideResponse(
+    val id: Long,
+    val createdAt: String,              // ISO timestamp
+    val expiresAt: String,              // ISO timestamp
+    val mode: String?,                   // null = no mode override
+    val systemTemp: Int?,                // null = no system temp override
+    val zoneOverrides: List<ZoneOverrideResponse>,
+    val remainingMinutes: Long           // minutes until expiration
+)
+
+data class ZoneOverrideResponse(
+    val zoneId: Long,
+    val temp: Int?,                      // null = no temp override for this zone
+    val enabled: Boolean?                // null = no state override for this zone
+)
+
+/**
+ * Request to create a new override.
+ * Duration can be specified as:
+ * - "1h", "2h", "4h" - fixed duration
+ * - "until_next" - until the next scheduled period begins
+ */
+data class OverrideCreateRequest(
+    val duration: String,                // "1h", "2h", "4h", or "until_next"
+    val mode: String? = null,            // optional mode override
+    val systemTemp: Int? = null,         // optional system temp override
+    val zoneOverrides: List<ZoneOverrideRequest>? = null  // optional zone-specific overrides
+)
+
+data class ZoneOverrideRequest(
+    val zoneId: Long,
+    val temp: Int? = null,               // optional temp override for this zone
+    val enabled: Boolean? = null         // optional state override for this zone
+)
+
 // ============ Error DTOs ============
 
 data class ErrorResponse(

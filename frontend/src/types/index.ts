@@ -218,3 +218,41 @@ export const MONTH_NAMES = [
   "November",
   "December",
 ] as const
+
+// ============ Override Types ============
+
+// Override duration options
+export type OverrideDuration = "1h" | "2h" | "4h" | "until_next"
+
+// Override response from API
+export interface Override {
+  id: number
+  createdAt: string // ISO timestamp
+  expiresAt: string // ISO timestamp
+  mode: AcMode | null
+  systemTemp: number | null
+  zoneOverrides: ZoneOverride[]
+  remainingMinutes: number
+}
+
+// Per-zone override settings
+export interface ZoneOverride {
+  zoneId: number
+  temp: number | null
+  enabled: boolean | null
+}
+
+// Request to create a new override
+export interface OverrideCreateRequest {
+  duration: OverrideDuration
+  mode?: AcMode | null
+  systemTemp?: number | null
+  zoneOverrides?: ZoneOverrideRequest[] | null
+}
+
+// Per-zone override request
+export interface ZoneOverrideRequest {
+  zoneId: number
+  temp?: number | null
+  enabled?: boolean | null
+}

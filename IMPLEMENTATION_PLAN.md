@@ -15,11 +15,11 @@ This is a greenfield project - no source code exists yet. Implementation proceed
 
 ---
 
-## Project Status: Phase 3 Complete (Scheduling)
+## Project Status: Phase 4 Complete (Manual Override)
 
-**Last Updated:** 2026-01-23
-**Status:** Phase 3 complete. Scheduling feature fully implemented (backend and frontend).
-**Next Action:** Begin Phase 4 - Manual Override (hold duration, resume schedule)
+**Last Updated:** 2026-01-24
+**Status:** Phase 4 complete. Manual override feature fully implemented (backend and frontend).
+**Next Action:** All planned phases complete. Consider future enhancements or maintenance.
 
 **Critical Bug Fixed (2026-01-20):** The `findHourlyAveragesByZoneIdAndTimestampBetween` repository method was missing, causing the backend to fail to compile. This has been fixed.
 
@@ -86,7 +86,7 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 | 3 | 1.11-1.12 | Testing & polish | Complete |
 | 4 | 2.1-2.4 | Temperature history logging & graphs | Complete |
 | 5 | 3.1-3.5 | Season-based scheduling system | Complete |
-| 6 | 4.1-4.4 | Manual override with hold duration | Not Started |
+| 6 | 4.1-4.4 | Manual override with hold duration | Complete |
 
 ---
 
@@ -311,41 +311,50 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 
 ## Phase 4: Manual Override (Priority: LOW)
 
+**Implementation Complete (2026-01-24):**
+- Backend: Override entity, OverrideRepository, OverrideService, OverrideController
+- Backend: Modified ScheduleExecutionService to check for active overrides before applying scheduled settings
+- Backend: Unit tests for OverrideService and ScheduleExecutionService
+- Frontend: Override types and API functions, useOverride hooks
+- Frontend: OverrideBanner component showing active override status with countdown and cancel button
+- Frontend: OverrideDialog component for creating overrides with hold duration selection
+- Frontend: Integrated OverrideBanner into Dashboard
+
 ### 4.1 Backend Database Schema
-- [ ] Create `model/Override.kt` entity:
+- [x] Create `model/Override.kt` entity:
   - `id: Long`, `createdAt: Instant`, `expiresAt: Instant`
   - `mode: String?`, `systemTemp: Int?`
   - `zoneOverrides: String` (JSON: `[{zoneId, temp, enabled}]`)
-- [ ] Create `repository/OverrideRepository.kt`
-- [ ] Update `schema.sql`
+- [x] Create `repository/OverrideRepository.kt`
+- [x] Update `schema.sql`
 
 ### 4.2 Backend Override API
-- [ ] Create `controller/OverrideController.kt`
-- [ ] `GET /api/override` - Get current active override (if any)
-- [ ] `POST /api/override` - Create new override
+- [x] Create `controller/OverrideController.kt`
+- [x] `GET /api/override` - Get current active override (if any)
+- [x] `POST /api/override` - Create new override
   - Body: `{ duration: "1h" | "2h" | "4h" | "until_next", mode?, systemTemp?, zoneOverrides? }`
   - Calculate `expiresAt` based on duration
   - "until_next" = calculate from schedule
-- [ ] `DELETE /api/override` - Cancel current override
-- [ ] Create override DTOs
+- [x] `DELETE /api/override` - Cancel current override
+- [x] Create override DTOs
 
 ### 4.3 Backend Override Logic
-- [ ] Modify `ScheduleExecutionService` to check for active override first
-- [ ] If override exists and not expired -> apply override settings
-- [ ] If override expired -> delete and resume schedule
-- [ ] Auto-create override when manual change is made while scheduling is active
-- [ ] Create `service/OverrideService.kt` for override management
+- [x] Modify `ScheduleExecutionService` to check for active override first
+- [x] If override exists and not expired -> apply override settings
+- [x] If override expired -> delete and resume schedule
+- [x] Auto-create override when manual change is made while scheduling is active
+- [x] Create `service/OverrideService.kt` for override management
 
 ### 4.4 Frontend Override UI
-- [ ] Add override indicator banner on Dashboard header
+- [x] Add override indicator banner on Dashboard header
   - Show "Override active - expires in X" when override exists
   - Cancel button to remove override
-- [ ] Modify control interactions:
+- [x] Modify control interactions:
   - When user changes setting with active schedule, prompt for hold duration
-- [ ] Create `src/components/OverrideDialog.tsx`:
+- [x] Create `src/components/OverrideDialog.tsx`:
   - Duration selector: 1h, 2h, 4h, Until next scheduled change
   - Confirm/Cancel buttons
-- [ ] Display override status in system header
+- [x] Display override status in system header
 
 ---
 

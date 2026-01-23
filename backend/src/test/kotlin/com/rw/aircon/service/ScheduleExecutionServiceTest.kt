@@ -2,10 +2,12 @@ package com.rw.aircon.service
 
 import com.rw.aircon.client.MyAirClient
 import com.rw.aircon.dto.*
+import com.rw.aircon.model.Override
 import com.rw.aircon.model.ScheduleEntry
 import com.rw.aircon.model.Season
 import com.rw.aircon.model.Zone
 import com.rw.aircon.model.ZoneSchedule
+import com.rw.aircon.repository.OverrideRepository
 import com.rw.aircon.repository.ScheduleEntryRepository
 import com.rw.aircon.repository.SeasonRepository
 import com.rw.aircon.repository.ZoneRepository
@@ -19,9 +21,11 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.junit.jupiter.MockitoSettings
 import org.mockito.kotlin.*
 import org.mockito.quality.Strictness
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.MonthDay
+import java.time.temporal.ChronoUnit
 
 @ExtendWith(MockitoExtension::class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -40,6 +44,9 @@ class ScheduleExecutionServiceTest {
     private lateinit var zoneRepository: ZoneRepository
 
     @Mock
+    private lateinit var overrideRepository: OverrideRepository
+
+    @Mock
     private lateinit var myAirClient: MyAirClient
 
     @Mock
@@ -54,6 +61,7 @@ class ScheduleExecutionServiceTest {
             scheduleEntryRepository,
             zoneScheduleRepository,
             zoneRepository,
+            overrideRepository,
             myAirClient,
             myAirCacheService
         )
@@ -377,6 +385,38 @@ class ScheduleExecutionServiceTest {
 
         // Then
         assertNull(scheduleExecutionService.getLastAppliedEntryId())
+    }
+
+    // ============ Override blocking tests ============
+
+    @Test
+    fun `isBlockedByOverride returns true when active override exists`() {
+        // Given
+        val override = Override(
+            id = 1,
+            createdAt = Instant.now(),
+            expiresAt = Instant.now().plus(1, ChronoUnit.HOURS),
+            mode = "cool"
+        )
+        whenever(overrideRepository.findActiveOverride(any())).thenReturn(override)
+
+        // When
+        val result = scheduleExecutionService.isBlockedByOverride()
+
+        // Then
+        assertTrue(result)
+    }
+
+    @Test
+    fun `isBlockedByOverride returns false when no active override`() {
+        // Given
+        whenever(overrideRepository.findActiveOverride(any())).thenReturn(null)
+
+        // When
+        val result = scheduleExecutionService.isBlockedByOverride()
+
+        // Then
+        assertFalse(result)
     }
 
     private fun createMockResponse(): MyAirResponse {
