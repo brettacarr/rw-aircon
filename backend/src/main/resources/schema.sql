@@ -36,3 +36,43 @@ CREATE TABLE IF NOT EXISTS system_log (
 
 -- Index for system_log
 CREATE INDEX IF NOT EXISTS idx_system_log_timestamp ON system_log(timestamp);
+
+-- Season table for scheduling periods with date ranges
+CREATE TABLE IF NOT EXISTS season (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    start_month INTEGER NOT NULL,
+    start_day INTEGER NOT NULL,
+    end_month INTEGER NOT NULL,
+    end_day INTEGER NOT NULL,
+    priority INTEGER NOT NULL DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 1
+);
+
+-- Schedule entry table for time periods within a season's weekly schedule
+CREATE TABLE IF NOT EXISTS schedule_entry (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    season_id INTEGER NOT NULL,
+    day_of_week INTEGER NOT NULL,
+    start_time TEXT NOT NULL,
+    end_time TEXT NOT NULL,
+    mode TEXT NOT NULL,
+    FOREIGN KEY (season_id) REFERENCES season(id) ON DELETE CASCADE
+);
+
+-- Index for schedule_entry
+CREATE INDEX IF NOT EXISTS idx_schedule_entry_season_day ON schedule_entry(season_id, day_of_week);
+
+-- Zone schedule table for per-zone settings within a schedule entry
+CREATE TABLE IF NOT EXISTS zone_schedule (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    schedule_entry_id INTEGER NOT NULL,
+    zone_id INTEGER NOT NULL,
+    target_temp INTEGER NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    FOREIGN KEY (schedule_entry_id) REFERENCES schedule_entry(id) ON DELETE CASCADE,
+    FOREIGN KEY (zone_id) REFERENCES zone(id)
+);
+
+-- Index for zone_schedule
+CREATE INDEX IF NOT EXISTS idx_zone_schedule_entry ON zone_schedule(schedule_entry_id);

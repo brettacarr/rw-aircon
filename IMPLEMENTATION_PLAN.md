@@ -15,11 +15,11 @@ This is a greenfield project - no source code exists yet. Implementation proceed
 
 ---
 
-## Project Status: Phase 2 Complete (Temperature History)
+## Project Status: Phase 3 Complete (Scheduling)
 
-**Last Updated:** 2026-01-20
-**Status:** Phase 2 complete. Temperature History feature fully implemented (backend and frontend).
-**Next Action:** Begin Phase 3 - Scheduling (seasons, weekly schedules)
+**Last Updated:** 2026-01-23
+**Status:** Phase 3 complete. Scheduling feature fully implemented (backend and frontend).
+**Next Action:** Begin Phase 4 - Manual Override (hold duration, resume schedule)
 
 **Critical Bug Fixed (2026-01-20):** The `findHourlyAveragesByZoneIdAndTimestampBetween` repository method was missing, causing the backend to fail to compile. This has been fixed.
 
@@ -85,7 +85,7 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 | 2 | 1.6-1.10 | Frontend setup, Dashboard, Zone cards | Complete |
 | 3 | 1.11-1.12 | Testing & polish | Complete |
 | 4 | 2.1-2.4 | Temperature history logging & graphs | Complete |
-| 5 | 3.1-3.5 | Season-based scheduling system | Not Started |
+| 5 | 3.1-3.5 | Season-based scheduling system | Complete |
 | 6 | 4.1-4.4 | Manual override with hold duration | Not Started |
 
 ---
@@ -237,73 +237,75 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 ## Phase 3: Scheduling (Priority: MEDIUM)
 
 ### 3.0 Decision: Native Scenes vs Custom Scheduling
-- [ ] Evaluate MyAir native `myScenes` API capabilities:
+- [x] Evaluate MyAir native `myScenes` API capabilities:
   - Pro: Works when app is offline (runs on hardware)
   - Pro: Simpler implementation
   - Con: Limited flexibility (no seasons concept in native API)
   - Con: More complex scene structure to manage
-- [ ] Decision: Implement custom scheduling for full season support
-- [ ] Document rationale in specs or ADR
+- [x] Decision: Implement custom scheduling for full season support
+- [x] Document rationale in specs or ADR
+
+**Architecture Decision (2026-01-23):** Custom scheduling system implemented instead of native MyAir scenes to support full season flexibility with date ranges and priority-based overlap resolution.
 
 ### 3.1 Backend Database Schema
-- [ ] Create `model/Season.kt` entity:
+- [x] Create `model/Season.kt` entity:
   - `id: Long`, `name: String`
   - `startMonth: Int`, `startDay: Int`, `endMonth: Int`, `endDay: Int`
   - `priority: Int` (higher = wins on overlap), `active: Boolean`
-- [ ] Create `model/ScheduleEntry.kt` entity:
+- [x] Create `model/ScheduleEntry.kt` entity:
   - `id: Long`, `seasonId: Long`, `dayOfWeek: Int` (1-7)
   - `startTime: LocalTime`, `endTime: LocalTime`, `mode: String`
-- [ ] Create `model/ZoneSchedule.kt` entity:
+- [x] Create `model/ZoneSchedule.kt` entity:
   - `id: Long`, `scheduleEntryId: Long`, `zoneId: Int`
   - `targetTemp: Int`, `enabled: Boolean`
-- [ ] Create repositories for all entities
-- [ ] Update `schema.sql`
+- [x] Create repositories for all entities
+- [x] Update `schema.sql`
 
 ### 3.2 Backend Season API
-- [ ] Create `controller/SeasonController.kt`
-- [ ] `GET /api/seasons` - List all seasons with their schedules
-- [ ] `POST /api/seasons` - Create new season
-- [ ] `PUT /api/seasons/{id}` - Update season details
-- [ ] `DELETE /api/seasons/{id}` - Delete season (cascade to entries)
-- [ ] Create season DTOs
+- [x] Create `controller/SeasonController.kt`
+- [x] `GET /api/seasons` - List all seasons with their schedules
+- [x] `POST /api/seasons` - Create new season
+- [x] `PUT /api/seasons/{id}` - Update season details
+- [x] `DELETE /api/seasons/{id}` - Delete season (cascade to entries)
+- [x] Create season DTOs
 
 ### 3.3 Backend Schedule API
-- [ ] `GET /api/seasons/{id}/schedule` - Get full schedule for season
-- [ ] `PUT /api/seasons/{id}/schedule` - Update entire schedule
+- [x] `GET /api/seasons/{id}/schedule` - Get full schedule for season
+- [x] `PUT /api/seasons/{id}/schedule` - Update entire schedule
   - Validate non-overlapping time periods within same day
   - Validate time ranges (start < end)
-- [ ] Create schedule DTOs
+- [x] Create schedule DTOs
 
 ### 3.4 Backend Schedule Execution
-- [ ] Create `service/ScheduleExecutionService.kt`
-- [ ] `determineActiveSeason()`: Find season matching current date by priority
-- [ ] `findCurrentPeriod()`: Find time period for current day/time
-- [ ] `applyScheduleSettings()`: Send commands to MyAir API
-- [ ] Create `@Scheduled` task to run check every minute
-- [ ] Log schedule transitions
-- [ ] Handle edge cases:
+- [x] Create `service/ScheduleExecutionService.kt`
+- [x] `determineActiveSeason()`: Find season matching current date by priority
+- [x] `findCurrentPeriod()`: Find time period for current day/time
+- [x] `applyScheduleSettings()`: Send commands to MyAir API
+- [x] Create `@Scheduled` task to run check every minute
+- [x] Log schedule transitions
+- [x] Handle edge cases:
   - No active season -> no action (manual control)
   - No matching period for current time -> maintain last state
   - Overlapping seasons -> use highest priority
 
 ### 3.5 Frontend Schedule Management
-- [ ] Create `src/pages/Schedules.tsx`
-- [ ] Season list view with CRUD operations
-- [ ] Create `src/components/SeasonForm.tsx`:
+- [x] Create `src/pages/Schedules.tsx`
+- [x] Season list view with CRUD operations
+- [x] Create `src/components/SeasonForm.tsx`:
   - Name input
   - Date range pickers (start/end month+day)
   - Priority number input
   - Active toggle
-- [ ] Create `src/components/WeeklyScheduleEditor.tsx`:
+- [x] Create `src/components/WeeklyScheduleEditor.tsx`:
   - 7-day grid/tabs
   - Time period rows per day
-- [ ] Create `src/components/TimePeriodEditor.tsx`:
+- [x] Create `src/components/TimePeriodEditor.tsx`:
   - Start/end time pickers
   - Mode selector
   - Per-zone settings: temperature slider, on/off toggle
-- [ ] Visual schedule display (timeline or grid view)
-- [ ] Validation: prevent overlapping time periods
-- [ ] Add navigation to Schedules page
+- [x] Visual schedule display (timeline or grid view)
+- [x] Validation: prevent overlapping time periods
+- [x] Add navigation to Schedules page
 
 ---
 

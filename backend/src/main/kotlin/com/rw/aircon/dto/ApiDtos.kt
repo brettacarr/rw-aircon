@@ -103,6 +103,80 @@ data class SystemHistoryResponse(
     val data: List<SystemLogResponse>
 )
 
+// ============ Season & Schedule DTOs ============
+
+data class SeasonResponse(
+    val id: Long,
+    val name: String,
+    val startMonth: Int,
+    val startDay: Int,
+    val endMonth: Int,
+    val endDay: Int,
+    val priority: Int,
+    val active: Boolean
+)
+
+data class SeasonCreateRequest(
+    val name: String,
+    val startMonth: Int,
+    val startDay: Int,
+    val endMonth: Int,
+    val endDay: Int,
+    val priority: Int = 0,
+    val active: Boolean = true
+)
+
+data class SeasonUpdateRequest(
+    val name: String? = null,
+    val startMonth: Int? = null,
+    val startDay: Int? = null,
+    val endMonth: Int? = null,
+    val endDay: Int? = null,
+    val priority: Int? = null,
+    val active: Boolean? = null
+)
+
+data class ScheduleEntryResponse(
+    val id: Long,
+    val seasonId: Long,
+    val dayOfWeek: Int,                     // 1=Monday, 7=Sunday
+    val startTime: String,                   // HH:MM
+    val endTime: String,                     // HH:MM
+    val mode: String,                        // cool, heat, vent, dry
+    val zoneSettings: List<ZoneScheduleResponse>
+)
+
+data class ZoneScheduleResponse(
+    val id: Long,
+    val zoneId: Long,
+    val zoneName: String,
+    val targetTemp: Int,
+    val enabled: Boolean
+)
+
+data class ScheduleEntryRequest(
+    val dayOfWeek: Int,                     // 1=Monday, 7=Sunday
+    val startTime: String,                   // HH:MM
+    val endTime: String,                     // HH:MM
+    val mode: String,                        // cool, heat, vent, dry
+    val zoneSettings: List<ZoneScheduleRequest>
+)
+
+data class ZoneScheduleRequest(
+    val zoneId: Long,
+    val targetTemp: Int,                    // 16-32
+    val enabled: Boolean = true
+)
+
+data class SeasonWithScheduleResponse(
+    val season: SeasonResponse,
+    val schedule: List<ScheduleEntryResponse>
+)
+
+data class FullScheduleUpdateRequest(
+    val entries: List<ScheduleEntryRequest>
+)
+
 // ============ Error DTOs ============
 
 data class ErrorResponse(

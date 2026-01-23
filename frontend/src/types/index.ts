@@ -112,3 +112,109 @@ export interface SystemHistoryResponse {
 }
 
 export type TimeRange = "24h" | "7d" | "30d" | "custom"
+
+// ============ Schedule Types ============
+
+// Season response from API
+export interface Season {
+  id: number
+  name: string
+  startMonth: number
+  startDay: number
+  endMonth: number
+  endDay: number
+  priority: number
+  active: boolean
+}
+
+// Season with full schedule
+export interface SeasonWithSchedule {
+  season: Season
+  schedule: ScheduleEntry[]
+}
+
+// Schedule entry (time period within a day)
+export interface ScheduleEntry {
+  id: number
+  seasonId: number
+  dayOfWeek: number // 1=Monday, 7=Sunday
+  startTime: string // HH:MM
+  endTime: string // HH:MM
+  mode: AcMode
+  zoneSettings: ZoneScheduleSetting[]
+}
+
+// Per-zone settings for a schedule entry
+export interface ZoneScheduleSetting {
+  id: number
+  zoneId: number
+  zoneName: string
+  targetTemp: number
+  enabled: boolean
+}
+
+// Request types for creating/updating seasons
+export interface SeasonCreateRequest {
+  name: string
+  startMonth: number
+  startDay: number
+  endMonth: number
+  endDay: number
+  priority?: number
+  active?: boolean
+}
+
+export interface SeasonUpdateRequest {
+  name?: string
+  startMonth?: number
+  startDay?: number
+  endMonth?: number
+  endDay?: number
+  priority?: number
+  active?: boolean
+}
+
+// Request types for schedule entries
+export interface ScheduleEntryRequest {
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+  mode: AcMode
+  zoneSettings: ZoneScheduleRequest[]
+}
+
+export interface ZoneScheduleRequest {
+  zoneId: number
+  targetTemp: number
+  enabled: boolean
+}
+
+export interface FullScheduleUpdateRequest {
+  entries: ScheduleEntryRequest[]
+}
+
+// Day of week helper
+export const DAY_NAMES = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+] as const
+
+export const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const

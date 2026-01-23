@@ -82,13 +82,13 @@ export function History({ onBack }: HistoryPageProps) {
       value: zone.id,
       label: zone.name,
     }))
-  }, [systemStatus?.zones])
+  }, [systemStatus])
 
   // Selected zone name for chart
   const selectedZoneName = useMemo(() => {
     const zone = systemStatus?.zones.find((z) => z.id === selectedZoneId)
     return zone?.name ?? "Zone"
-  }, [systemStatus?.zones, selectedZoneId])
+  }, [systemStatus, selectedZoneId])
 
   const isLoading =
     isSystemLoading || isZoneHistoryLoading || (showOutdoorTemp && isSystemHistoryLoading)

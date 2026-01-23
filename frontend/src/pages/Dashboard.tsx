@@ -23,11 +23,13 @@ import {
   Minus,
   Plus,
   ChartLine,
+  Calendar,
 } from "lucide-react"
 import type { AcMode, FanSpeed } from "@/types"
 
 interface DashboardProps {
   onNavigateToHistory?: () => void
+  onNavigateToSchedules?: () => void
 }
 
 const MODE_OPTIONS: { value: AcMode; label: string }[] = [
@@ -45,7 +47,7 @@ const FAN_OPTIONS: { value: FanSpeed; label: string }[] = [
   { value: "autoAA", label: "Auto AA" },
 ]
 
-export function Dashboard({ onNavigateToHistory }: DashboardProps) {
+export function Dashboard({ onNavigateToHistory, onNavigateToSchedules }: DashboardProps) {
   const { data, isLoading, isError, error, refetch } = useSystemStatus()
 
   const setSystemPower = useSetSystemPower()
@@ -111,6 +113,17 @@ export function Dashboard({ onNavigateToHistory }: DashboardProps) {
             >
               <ChartLine className="h-4 w-4 mr-2" />
               History
+            </Button>
+          )}
+          {onNavigateToSchedules && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onNavigateToSchedules}
+              aria-label="Manage schedules"
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Schedules
             </Button>
           )}
         </div>
