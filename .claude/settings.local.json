@@ -13,7 +13,17 @@
       "Bash(curl:*)",
       "Bash(sqlite3:*)",
       "Bash(python3:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(__NEW_LINE_a8ec0b552833371f__ echo \"\")",
+      "Bash(__NEW_LINE_264688d780cd2954__ echo \"\")",
+      "Bash(__NEW_LINE_e15ec77ad81b4a1e__ echo \"\")",
+      "Bash(__NEW_LINE_16d73fae91b1d34f__ echo \"\")",
+      "Bash(npm run typecheck:*)",
+      "Bash(npx tsc:*)",
+      "Bash(/usr/local/bin/npm run typecheck)",
+      "Bash(ls:*)"
     ]
   }
 }
