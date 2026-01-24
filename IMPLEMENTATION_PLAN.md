@@ -15,11 +15,11 @@ This is a greenfield project - no source code exists yet. Implementation proceed
 
 ---
 
-## Project Status: Phase 4 Complete (Manual Override)
+## Project Status: Phase 5 Implementation Required (Auto Mode)
 
 **Last Updated:** 2026-01-24
-**Status:** Phase 4 complete. Manual override feature fully implemented (backend and frontend).
-**Next Action:** All planned phases complete. Consider future enhancements or maintenance.
+**Status:** Phases 1-4 complete. Phase 5 (Auto Mode) specification exists but is completely unimplemented.
+**Next Action:** Implement Phase 5A (Core Auto Mode backend) - see specs/05-auto-mode.md for full specification.
 
 **Critical Bug Fixed (2026-01-20):** The `findHourlyAveragesByZoneIdAndTimestampBetween` repository method was missing, causing the backend to fail to compile. This has been fixed.
 
@@ -87,6 +87,10 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 | 4 | 2.1-2.4 | Temperature history logging & graphs | Complete |
 | 5 | 3.1-3.5 | Season-based scheduling system | Complete |
 | 6 | 4.1-4.4 | Manual override with hold duration | Complete |
+| 7 | 5A | Auto Mode - Core backend | Not Started |
+| 8 | 5B | Auto Mode - UI enhancements | Not Started |
+| 9 | 5C | Auto Mode - Logging | Not Started |
+| 10 | QA | Quality improvements (Phases 1-4) | Not Started |
 
 ---
 
@@ -355,6 +359,171 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
   - Duration selector: 1h, 2h, 4h, Until next scheduled change
   - Confirm/Cancel buttons
 - [x] Display override status in system header
+
+---
+
+## Phase 5: Auto Mode (Priority: HIGH)
+
+**Specification:** See `specs/05-auto-mode.md` for full details.
+
+Auto Mode is an intelligent climate control feature that automatically maintains zone temperatures within user-defined min/max ranges. The system automatically switches between heating, cooling, and off states based on zone temperatures.
+
+### 5A.1 Backend Database Schema (Priority: HIGH)
+- [ ] Create `model/AutoModeConfig.kt` entity:
+  - `id: Long`, `active: Boolean`, `createdAt: Instant`, `updatedAt: Instant`
+  - `priorityZoneId: Long?` (preferred myZone for auto mode, cannot be Guest zone)
+- [ ] Create `model/AutoModeZone.kt` entity:
+  - `id: Long`, `zoneId: Long` (FK to zone), `enabled: Boolean`
+  - `minTemp: Double`, `maxTemp: Double` (16.0-32.0, min 2°C gap)
+  - Unique constraint on zoneId
+- [ ] Create `repository/AutoModeConfigRepository.kt`
+- [ ] Create `repository/AutoModeZoneRepository.kt`
+- [ ] Update `schema.sql` with auto_mode_config and auto_mode_zone tables
+- [ ] Add control_mode tracking (manual/auto/schedule) to system state
+
+### 5A.2 Backend Auto Mode API (Priority: HIGH)
+- [ ] Create `controller/AutoModeController.kt`
+- [ ] `GET /api/auto-mode` - Get current Auto Mode configuration with zone ranges
+- [ ] `PUT /api/auto-mode` - Update Auto Mode configuration
+- [ ] `POST /api/auto-mode/activate` - Activate Auto Mode (deactivates other modes)
+- [ ] `DELETE /api/auto-mode/activate` - Deactivate Auto Mode (returns to Manual)
+- [ ] `GET /api/auto-mode/status` - Get current execution status (why heating/cooling)
+- [ ] Create `controller/ControlModeController.kt`
+- [ ] `GET /api/control-mode` - Get current control mode
+- [ ] `PUT /api/control-mode` - Switch control mode (manual/auto/schedule)
+- [ ] Create request/response DTOs with validation:
+  - Temperature range: 16°C - 32°C
+  - Min/Max gap: at least 2°C
+  - At least one non-Guest zone must be active
+  - Guest zone cannot be priority zone
+
+### 5A.3 Backend Auto Mode Service (Priority: HIGH)
+- [ ] Create `service/AutoModeService.kt`:
+  - Validate and store Auto Mode configuration
+  - Handle zone range configuration
+  - Enforce Guest zone restrictions
+- [ ] Create `service/AutoModeExecutionService.kt`:
+  - `@Scheduled(cron = "0 * * * * *")` - runs every minute
+  - Only execute when Auto Mode is active
+  - Implement decision logic:
+    1. Check myZone first (if temp < min → Heat, if temp > max → Cool)
+    2. If myZone in range, check other zones
+    3. If all zones in range → Turn system OFF
+    4. Use 0.5°C hysteresis (target = min + 0.5 for heat, max - 0.5 for cool)
+  - Track execution status for status endpoint
+  - Log actions for debugging
+- [ ] Modify `ScheduleExecutionService.kt` to check control mode before executing
+- [ ] Integration tests for Auto Mode execution logic
+
+### 5A.4 Backend Control Mode Integration (Priority: HIGH)
+- [ ] Update `ScheduleExecutionService` to only run when control_mode = 'schedule'
+- [ ] Update `OverrideService` to work with all control modes (override pauses auto mode)
+- [ ] Ensure mode switching preserves configurations (switching away doesn't delete settings)
+
+### 5B.1 Frontend Auto Mode Types & API (Priority: HIGH)
+- [ ] Create TypeScript interfaces in `src/types/`:
+  - `AutoModeConfig`, `AutoModeZone`, `AutoModeStatus`
+  - `ControlMode`, `ZoneStatus` (in_range, below_min, above_max)
+- [ ] Create `src/api/autoMode.ts`:
+  - `getAutoModeConfig()`, `updateAutoModeConfig()`
+  - `activateAutoMode()`, `deactivateAutoMode()`
+  - `getAutoModeStatus()`
+- [ ] Create `src/api/controlMode.ts`:
+  - `getControlMode()`, `setControlMode()`
+- [ ] Create `src/hooks/useAutoMode.ts`:
+  - `useAutoModeConfig()`, `useAutoModeStatus()`
+  - `useActivateAutoMode()`, `useDeactivateAutoMode()`
+  - `useUpdateAutoModeConfig()`
+- [ ] Create `src/hooks/useControlMode.ts`:
+  - `useControlMode()`, `useSetControlMode()`
+
+### 5B.2 Frontend Mode Selector (Priority: HIGH)
+- [ ] Create `src/components/ModeSelector.tsx`:
+  - Three mode options: Manual, Auto, Schedule
+  - Icons for each mode (hand/slider, thermometer, calendar)
+  - Visual indicator for active mode
+  - Mode switching triggers API call
+- [ ] Add ModeSelector to Dashboard header
+- [ ] Add "Auto Mode Active" banner when in auto mode
+
+### 5B.3 Frontend Auto Mode Configuration (Priority: HIGH)
+- [ ] Create `src/components/AutoModeConfigPanel.tsx`:
+  - Zone list with enable/disable toggles
+  - Min/Max temperature inputs for each active zone
+  - Priority zone selector (excludes Guest)
+  - Validation feedback (2°C gap, Guest restrictions)
+- [ ] Create `src/pages/AutoModeSettings.tsx` or integrate into existing settings
+- [ ] Add navigation to Auto Mode settings
+
+### 5B.4 Frontend Dashboard Integration (Priority: MEDIUM)
+- [ ] Update Dashboard to show Auto Mode status when active:
+  - Current action: "Heating to 22.5°C" / "Cooling to 23.5°C" / "All zones in range"
+  - Triggering zone information
+- [ ] Update `ZoneCard.tsx` for Auto Mode display:
+  - Show min/max range instead of single target
+  - Status indicators: ✓ (in range), ↑ (needs heat), ↓ (needs cool)
+  - Color coding: green (in range), blue (below min), orange (above max)
+- [ ] Disable manual temperature controls when Auto Mode active (or prompt for override)
+
+### 5C.1 Backend Auto Mode Logging (Priority: LOW)
+- [ ] Create `model/AutoModeLog.kt` entity:
+  - `id: Long`, `timestamp: Instant`
+  - `action: String` (heat_on, cool_on, system_off, mode_change)
+  - `reason: String`, `triggeringZoneId: Long?`
+  - `systemMode: String`, `newSystemMode: String`
+  - `zoneTemps: String` (JSON snapshot)
+- [ ] Create `repository/AutoModeLogRepository.kt`
+- [ ] Add logging to AutoModeExecutionService
+- [ ] `GET /api/auto-mode/log?limit=50` endpoint
+
+### 5C.2 Frontend Log Viewing (Priority: LOW)
+- [ ] Create `src/components/AutoModeLogViewer.tsx`
+- [ ] Display action history with timestamps and reasons
+- [ ] Add to Auto Mode settings or Dashboard
+
+---
+
+## Quality Improvements (Phases 1-4)
+
+These are bugs, missing functionality, and quality issues discovered during code review.
+
+### Backend Bug Fixes (Priority: HIGH)
+- [ ] **CRITICAL**: Add `@Modifying` annotation to `OverrideRepository.deleteExpired()` - currently will fail at runtime
+- [ ] Call `OverrideService.cleanupExpiredOverrides()` from a scheduled task - method exists but is never invoked
+- [ ] Fix `zoneId` type inconsistency: `TemperatureLog` uses `Int` but other entities use `Long`
+
+### Backend Testing (Priority: MEDIUM)
+- [ ] Add unit tests for `DataRetentionService`
+- [ ] Add unit tests for `HistoryService`
+- [ ] Add unit tests for `MyAirCacheService`
+- [ ] Add unit tests for `TemperatureLoggingService`
+
+### Backend Architecture (Priority: MEDIUM)
+- [ ] Add global exception handler with `@ControllerAdvice`
+- [ ] Add bean validation annotations (`@Valid`, `@Min`, `@Max`, etc.) to controller request bodies
+- [ ] Refactor JPA entities to use proper relationship annotations instead of plain Long FK fields
+- [ ] Extract hardcoded values (MIN_TEMP=16, MAX_TEMP=32) to configuration properties
+- [ ] Add environment-specific configuration profiles (dev, staging, prod)
+
+### Database Schema (Priority: MEDIUM)
+- [ ] Change `zone_schedule.target_temp` from INTEGER to REAL for 0.5°C hysteresis support
+- [ ] Add `ON DELETE CASCADE` to `zone_schedule.zone_id` foreign key
+- [ ] Add `ON DELETE CASCADE` to `temperature_log.zone_id` foreign key
+
+### Frontend Bug Fixes (Priority: MEDIUM)
+- [ ] Fix `OverrideDialog` error handling - currently only logs to console, should display to user
+- [ ] Add validation to temperature inputs across all components
+- [ ] Add missing error states to Schedules page
+
+### Frontend Features (Priority: MEDIUM)
+- [ ] Add myZone selector to Dashboard (ability to change which zone controls system)
+- [ ] Add "off" mode option in schedule entries
+
+### Frontend Accessibility (Priority: MEDIUM)
+- [ ] Add ARIA labels to interactive elements across all pages
+- [ ] Ensure proper keyboard navigation
+- [ ] Add screen reader support for dynamic content updates
+- [ ] Review and fix color contrast issues
 
 ---
 
