@@ -217,6 +217,101 @@ data class ZoneOverrideRequest(
     val enabled: Boolean? = null         // optional state override for this zone
 )
 
+// ============ Control Mode DTOs ============
+
+/**
+ * Response containing the current control mode.
+ */
+data class ControlModeResponse(
+    val mode: String,                       // "manual", "auto", or "schedule"
+    val changedAt: String                   // ISO timestamp when mode was last changed
+)
+
+/**
+ * Request to change the control mode.
+ */
+data class ControlModeRequest(
+    val mode: String                        // "manual", "auto", or "schedule"
+)
+
+// ============ Auto Mode DTOs ============
+
+/**
+ * Response containing the full Auto Mode configuration.
+ */
+data class AutoModeConfigResponse(
+    val active: Boolean,
+    val priorityZoneId: Long?,
+    val updatedAt: String,                  // ISO timestamp
+    val zones: List<AutoModeZoneResponse>
+)
+
+/**
+ * Per-zone configuration for Auto Mode.
+ */
+data class AutoModeZoneResponse(
+    val zoneId: Long,
+    val zoneName: String,
+    val enabled: Boolean,
+    val minTemp: Double,
+    val maxTemp: Double
+)
+
+/**
+ * Request to update Auto Mode configuration.
+ */
+data class AutoModeConfigRequest(
+    val priorityZoneId: Long? = null,
+    val zones: List<AutoModeZoneRequest>
+)
+
+/**
+ * Per-zone configuration update for Auto Mode.
+ */
+data class AutoModeZoneRequest(
+    val zoneId: Long,
+    val enabled: Boolean,
+    val minTemp: Double,
+    val maxTemp: Double
+)
+
+/**
+ * Status of Auto Mode execution.
+ * Explains what the system is currently doing and why.
+ */
+data class AutoModeStatusResponse(
+    val active: Boolean,
+    val systemState: String,                // "off", "heating", or "cooling"
+    val targetTemp: Double?,                // current target temperature
+    val reason: String,                     // human-readable explanation
+    val triggeringZone: TriggeringZoneInfo?, // zone that triggered current action
+    val zoneStatuses: List<ZoneStatusInfo>,
+    val lastChecked: String                 // ISO timestamp of last evaluation
+)
+
+/**
+ * Information about the zone that triggered the current action.
+ */
+data class TriggeringZoneInfo(
+    val zoneId: Long,
+    val zoneName: String,
+    val currentTemp: Double,
+    val deviation: Double                   // how far outside range (negative=below, positive=above)
+)
+
+/**
+ * Status of a single zone in Auto Mode.
+ */
+data class ZoneStatusInfo(
+    val zoneId: Long,
+    val zoneName: String,
+    val enabled: Boolean,
+    val currentTemp: Double,
+    val minTemp: Double,
+    val maxTemp: Double,
+    val status: String                      // "in_range", "below_min", or "above_max"
+)
+
 // ============ Error DTOs ============
 
 data class ErrorResponse(
