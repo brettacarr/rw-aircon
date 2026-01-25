@@ -1,7 +1,6 @@
 package com.rw.aircon.service
 
 import com.rw.aircon.config.TemperatureLoggingProperties
-import com.rw.aircon.repository.OverrideRepository
 import com.rw.aircon.repository.SystemLogRepository
 import com.rw.aircon.repository.TemperatureLogRepository
 import org.slf4j.LoggerFactory
@@ -19,7 +18,6 @@ import java.time.temporal.ChronoUnit
 class DataRetentionService(
     private val temperatureLogRepository: TemperatureLogRepository,
     private val systemLogRepository: SystemLogRepository,
-    private val overrideRepository: OverrideRepository,
     private val properties: TemperatureLoggingProperties
 ) {
     private val log = LoggerFactory.getLogger(DataRetentionService::class.java)
@@ -41,10 +39,6 @@ class DataRetentionService(
 
             val deletedSysLogs = systemLogRepository.deleteByTimestampBefore(cutoff)
             log.info("Deleted {} system log records", deletedSysLogs)
-
-            // Clean up expired overrides (no retention period needed - just delete if expired)
-            overrideRepository.deleteExpired()
-            log.info("Cleaned up expired overrides")
 
             log.info("Data retention cleanup completed successfully")
         } catch (e: Exception) {

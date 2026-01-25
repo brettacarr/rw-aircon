@@ -3,8 +3,8 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { Minus, Plus, Wifi, AlertTriangle, Check, TrendingUp, TrendingDown } from "lucide-react"
-import type { Zone, ZoneStatusInfo } from "@/types"
+import { Minus, Plus, Wifi, AlertTriangle } from "lucide-react"
+import type { Zone } from "@/types"
 
 interface ZoneCardProps {
   zone: Zone
@@ -12,7 +12,6 @@ interface ZoneCardProps {
   onTemperatureChange: (id: number, temperature: number) => void
   onPowerChange: (id: number, state: "open" | "close") => void
   isPending?: boolean
-  autoModeStatus?: ZoneStatusInfo | null
 }
 
 export function ZoneCard({
@@ -21,11 +20,9 @@ export function ZoneCard({
   onTemperatureChange,
   onPowerChange,
   isPending = false,
-  autoModeStatus = null,
 }: ZoneCardProps) {
   const isOpen = zone.state === "open"
   const canClose = !zone.isMyZone // Cannot close myZone
-  const isAutoMode = autoModeStatus !== null
 
   const handleTemperatureDecrease = () => {
     if (zone.setTemp > 16) {
@@ -43,72 +40,18 @@ export function ZoneCard({
     onPowerChange(zone.id, checked ? "open" : "close")
   }
 
-  // Get status display for Auto Mode
-  const getAutoModeStatusDisplay = () => {
-    if (!autoModeStatus || !autoModeStatus.enabled) return null
-
-    switch (autoModeStatus.status) {
-      case "in_range":
-        return {
-          icon: Check,
-          color: "text-green-600",
-          bgColor: "bg-green-50 border-green-200",
-          label: "In Range",
-        }
-      case "below_min":
-        return {
-          icon: TrendingUp,
-          color: "text-blue-600",
-          bgColor: "bg-blue-50 border-blue-200",
-          label: "Below Min",
-        }
-      case "above_max":
-        return {
-          icon: TrendingDown,
-          color: "text-orange-600",
-          bgColor: "bg-orange-50 border-orange-200",
-          label: "Above Max",
-        }
-      default:
-        return null
-    }
-  }
-
-  const statusDisplay = getAutoModeStatusDisplay()
-
   return (
     <Card
       className={cn(
         "transition-all",
         !isOpen && "opacity-60",
-        isPending && "animate-pulse",
-        isAutoMode && statusDisplay && statusDisplay.bgColor
+        isPending && "animate-pulse"
       )}
     >
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">{zone.name}</CardTitle>
           <div className="flex items-center gap-2">
-            {/* Auto Mode Status Indicator */}
-            {isAutoMode && autoModeStatus?.enabled && statusDisplay && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-xs",
-                  autoModeStatus.status === "in_range" && "bg-green-100 text-green-800 border-green-300",
-                  autoModeStatus.status === "below_min" && "bg-blue-100 text-blue-800 border-blue-300",
-                  autoModeStatus.status === "above_max" && "bg-orange-100 text-orange-800 border-orange-300"
-                )}
-              >
-                <statusDisplay.icon className="h-3 w-3 mr-1" />
-                {statusDisplay.label}
-              </Badge>
-            )}
-            {isAutoMode && autoModeStatus && !autoModeStatus.enabled && (
-              <Badge variant="secondary" className="text-xs">
-                Auto: Off
-              </Badge>
-            )}
             {zone.isMyZone && (
               <Badge variant="default" className="text-xs">
                 MyZone
@@ -126,58 +69,37 @@ export function ZoneCard({
       <CardContent className="space-y-4">
         {/* Current Temperature */}
         <div className="text-center">
-          <span
-            className={cn(
-              "text-4xl font-bold",
-              isAutoMode && statusDisplay && statusDisplay.color
-            )}
-          >
+          <span className="text-4xl font-bold">
             {zone.measuredTemp.toFixed(1)}
           </span>
           <span className="text-xl text-muted-foreground">°C</span>
         </div>
 
-        {/* Auto Mode: Show Range instead of controls */}
-        {isAutoMode && autoModeStatus?.enabled ? (
-          <div className="text-center p-3 bg-muted/30 rounded-lg">
-            <div className="text-sm text-muted-foreground mb-1">Target Range</div>
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-lg font-semibold text-blue-600">
-                {autoModeStatus.minTemp}°C
-              </span>
-              <span className="text-muted-foreground">-</span>
-              <span className="text-lg font-semibold text-orange-600">
-                {autoModeStatus.maxTemp}°C
-              </span>
-            </div>
+        {/* Target Temperature Controls */}
+        <div className="flex items-center justify-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleTemperatureDecrease}
+            disabled={isDisabled || !isOpen || zone.setTemp <= 16}
+            aria-label="Decrease temperature"
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
+          <div className="text-center min-w-[80px]">
+            <span className="text-2xl font-semibold">{zone.setTemp}</span>
+            <span className="text-sm text-muted-foreground">°C target</span>
           </div>
-        ) : (
-          /* Manual Mode: Target Temperature Controls */
-          <div className="flex items-center justify-center gap-4">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleTemperatureDecrease}
-              disabled={isDisabled || !isOpen || zone.setTemp <= 16}
-              aria-label="Decrease temperature"
-            >
-              <Minus className="h-4 w-4" />
-            </Button>
-            <div className="text-center min-w-[80px]">
-              <span className="text-2xl font-semibold">{zone.setTemp}</span>
-              <span className="text-sm text-muted-foreground">°C target</span>
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleTemperatureIncrease}
-              disabled={isDisabled || !isOpen || zone.setTemp >= 32}
-              aria-label="Increase temperature"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleTemperatureIncrease}
+            disabled={isDisabled || !isOpen || zone.setTemp >= 32}
+            aria-label="Increase temperature"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
 
         {/* Zone Power Toggle */}
         <div className="flex items-center justify-between pt-2 border-t">

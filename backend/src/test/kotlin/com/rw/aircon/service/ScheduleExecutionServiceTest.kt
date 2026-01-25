@@ -2,7 +2,6 @@ package com.rw.aircon.service
 
 import com.rw.aircon.client.MyAirClient
 import com.rw.aircon.dto.*
-import com.rw.aircon.model.ControlMode
 import com.rw.aircon.model.Override
 import com.rw.aircon.model.ScheduleEntry
 import com.rw.aircon.model.Season
@@ -53,16 +52,10 @@ class ScheduleExecutionServiceTest {
     @Mock
     private lateinit var myAirCacheService: MyAirCacheService
 
-    @Mock
-    private lateinit var controlModeService: ControlModeService
-
     private lateinit var scheduleExecutionService: ScheduleExecutionService
 
     @BeforeEach
     fun setUp() {
-        // Default to SCHEDULE mode for most tests
-        whenever(controlModeService.getControlMode()).thenReturn(ControlMode.SCHEDULE)
-
         scheduleExecutionService = ScheduleExecutionService(
             seasonRepository,
             scheduleEntryRepository,
@@ -70,8 +63,7 @@ class ScheduleExecutionServiceTest {
             zoneRepository,
             overrideRepository,
             myAirClient,
-            myAirCacheService,
-            controlModeService
+            myAirCacheService
         )
         scheduleExecutionService.resetAppliedState()
     }

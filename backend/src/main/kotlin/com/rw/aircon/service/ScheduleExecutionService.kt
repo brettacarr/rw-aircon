@@ -1,7 +1,6 @@
 package com.rw.aircon.service
 
 import com.rw.aircon.client.MyAirClient
-import com.rw.aircon.model.ControlMode
 import com.rw.aircon.model.ScheduleEntry
 import com.rw.aircon.model.Season
 import com.rw.aircon.model.ZoneSchedule
@@ -39,8 +38,7 @@ class ScheduleExecutionService(
     private val zoneRepository: ZoneRepository,
     private val overrideRepository: OverrideRepository,
     private val myAirClient: MyAirClient,
-    private val myAirCacheService: MyAirCacheService,
-    private val controlModeService: ControlModeService
+    private val myAirCacheService: MyAirCacheService
 ) {
     private val log = LoggerFactory.getLogger(ScheduleExecutionService::class.java)
 
@@ -57,14 +55,7 @@ class ScheduleExecutionService(
     @Scheduled(cron = "0 * * * * *") // Every minute at :00 seconds
     fun evaluateAndApplySchedule() {
         try {
-            // Check if Schedule mode is active - only execute when control mode is SCHEDULE
-            val controlMode = controlModeService.getControlMode()
-            if (controlMode != ControlMode.SCHEDULE) {
-                log.debug("Control mode is {} (not SCHEDULE), skipping schedule execution", controlMode)
-                return
-            }
-
-            // Check for active override - if present, skip schedule execution
+            // Check for active override first - if present, skip schedule execution
             val activeOverride = overrideRepository.findActiveOverride(Instant.now())
             if (activeOverride != null) {
                 log.debug("Active override present (expires at {}), skipping schedule execution",
@@ -288,13 +279,5 @@ class ScheduleExecutionService(
      */
     fun isBlockedByOverride(): Boolean {
         return overrideRepository.findActiveOverride(Instant.now()) != null
-    }
-
-    /**
-     * Check if schedule execution is enabled (control mode is SCHEDULE and no override).
-     */
-    fun isScheduleExecutionEnabled(): Boolean {
-        return controlModeService.getControlMode() == ControlMode.SCHEDULE &&
-               overrideRepository.findActiveOverride(Instant.now()) == null
     }
 }
