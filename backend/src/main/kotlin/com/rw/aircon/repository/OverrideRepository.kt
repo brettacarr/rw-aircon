@@ -2,8 +2,10 @@ package com.rw.aircon.repository
 
 import com.rw.aircon.model.Override
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
 /**
@@ -32,7 +34,10 @@ interface OverrideRepository : JpaRepository<Override, Long> {
     /**
      * Delete all expired overrides.
      * Used for cleanup during periodic maintenance.
+     * Note: @Modifying is required for DELETE/UPDATE queries in Spring Data JPA.
      */
+    @Modifying
+    @Transactional
     @Query("DELETE FROM Override o WHERE o.expiresAt <= :now")
     fun deleteExpired(now: Instant = Instant.now())
 }

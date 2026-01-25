@@ -1,4 +1,6 @@
 import { useSystemStatus } from "@/hooks/useSystemStatus"
+import { useControlMode } from "@/hooks/useControlMode"
+import { useAutoModeStatus } from "@/hooks/useAutoMode"
 import {
   useSetSystemPower,
   useSetSystemMode,
@@ -9,6 +11,8 @@ import {
 } from "@/hooks/useMutations"
 import { ZoneCard } from "@/components/ZoneCard"
 import { OverrideBanner } from "@/components/OverrideBanner"
+import { ModeSelector } from "@/components/ModeSelector"
+import { AutoModeBanner } from "@/components/AutoModeBanner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -25,12 +29,14 @@ import {
   Plus,
   ChartLine,
   Calendar,
+  Settings,
 } from "lucide-react"
 import type { AcMode, FanSpeed } from "@/types"
 
 interface DashboardProps {
   onNavigateToHistory?: () => void
   onNavigateToSchedules?: () => void
+  onNavigateToAutoMode?: () => void
 }
 
 const MODE_OPTIONS: { value: AcMode; label: string }[] = [
@@ -48,8 +54,11 @@ const FAN_OPTIONS: { value: FanSpeed; label: string }[] = [
   { value: "autoAA", label: "Auto AA" },
 ]
 
-export function Dashboard({ onNavigateToHistory, onNavigateToSchedules }: DashboardProps) {
+export function Dashboard({ onNavigateToHistory, onNavigateToSchedules, onNavigateToAutoMode }: DashboardProps) {
   const { data, isLoading, isError, error, refetch } = useSystemStatus()
+  const { data: controlMode } = useControlMode()
+  const isAutoMode = controlMode?.mode === "auto"
+  const { data: autoModeStatus } = useAutoModeStatus(isAutoMode)
 
   const setSystemPower = useSetSystemPower()
   const setSystemMode = useSetSystemMode()
@@ -104,6 +113,9 @@ export function Dashboard({ onNavigateToHistory, onNavigateToSchedules }: Dashbo
       {/* Override Banner - shows when manual override is active */}
       <OverrideBanner />
 
+      {/* Auto Mode Banner - shows when auto mode is active */}
+      <AutoModeBanner />
+
       {/* Header with System Status */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -130,8 +142,21 @@ export function Dashboard({ onNavigateToHistory, onNavigateToSchedules }: Dashbo
               Schedules
             </Button>
           )}
+          {onNavigateToAutoMode && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onNavigateToAutoMode}
+              aria-label="Auto Mode settings"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Auto Mode
+            </Button>
+          )}
         </div>
         <div className="flex items-center gap-4">
+          {/* Control Mode Selector */}
+          <ModeSelector disabled={!isSystemOn} />
           {/* Outdoor Temperature */}
           {data.isValidOutdoorTemp && data.outdoorTemp !== undefined && (
             <Badge variant="secondary" className="text-sm">
@@ -274,20 +299,28 @@ export function Dashboard({ onNavigateToHistory, onNavigateToSchedules }: Dashbo
       <div>
         <h2 className="text-xl font-semibold mb-4">Zones</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.zones.map((zone) => (
-            <ZoneCard
-              key={zone.id}
-              zone={zone}
-              isDisabled={!isSystemOn || isAnyMutationPending}
-              onTemperatureChange={(id, temperature) =>
-                setZoneTemperature.mutate({ id, temperature })
-              }
-              onPowerChange={(id, state) => setZonePower.mutate({ id, state })}
-              isPending={
-                setZoneTemperature.isPending || setZonePower.isPending
-              }
-            />
-          ))}
+          {data.zones.map((zone) => {
+            // Find the corresponding auto mode status for this zone
+            const zoneAutoStatus = isAutoMode && autoModeStatus
+              ? autoModeStatus.zoneStatuses.find((s) => s.zoneId === zone.id) ?? null
+              : null
+
+            return (
+              <ZoneCard
+                key={zone.id}
+                zone={zone}
+                isDisabled={!isSystemOn || isAnyMutationPending}
+                onTemperatureChange={(id, temperature) =>
+                  setZoneTemperature.mutate({ id, temperature })
+                }
+                onPowerChange={(id, state) => setZonePower.mutate({ id, state })}
+                isPending={
+                  setZoneTemperature.isPending || setZonePower.isPending
+                }
+                autoModeStatus={zoneAutoStatus}
+              />
+            )
+          })}
         </div>
       </div>
     </div>
