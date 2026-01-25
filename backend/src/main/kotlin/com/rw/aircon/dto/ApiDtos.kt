@@ -312,6 +312,42 @@ data class ZoneStatusInfo(
     val status: String                      // "in_range", "below_min", or "above_max"
 )
 
+// ============ Auto Mode Log DTOs ============
+
+/**
+ * Single entry in the Auto Mode action log.
+ */
+data class AutoModeLogResponse(
+    val id: Long,
+    val timestamp: String,                  // ISO timestamp
+    val action: String,                     // heat_on, cool_on, system_off, mode_change
+    val reason: String,                     // human-readable explanation
+    val triggeringZoneId: Long?,
+    val triggeringZoneName: String?,        // looked up from zone table
+    val systemMode: String?,                // mode before action
+    val newSystemMode: String?,             // mode after action
+    val zoneTemps: List<AutoModeLogZoneTemp>? // snapshot of zone temps
+)
+
+/**
+ * Zone temperature snapshot within an Auto Mode log entry.
+ */
+data class AutoModeLogZoneTemp(
+    val zoneId: Long,
+    val zoneName: String,
+    val currentTemp: Double,
+    val minTemp: Double,
+    val maxTemp: Double
+)
+
+/**
+ * Response containing a list of Auto Mode log entries.
+ */
+data class AutoModeLogListResponse(
+    val logs: List<AutoModeLogResponse>,
+    val total: Long                         // total count for pagination info
+)
+
 // ============ Error DTOs ============
 
 data class ErrorResponse(

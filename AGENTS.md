@@ -41,3 +41,10 @@ PATH="/opt/homebrew/Cellar/node/25.3.0/bin:$PATH" npm run build
 
 - Backend: Spring Boot + Kotlin, REST controllers in `controller/`, MyAir client in `client/`
 - Frontend: React + TypeScript + ShadCN, API calls in `src/api/`, components in `src/components/`
+
+### Git Permissions
+
+If you encounter `insufficient permission for adding an object to repository database .git/objects`, fix with:
+```bash
+sudo chown -R $(whoami) .git/objects
+```

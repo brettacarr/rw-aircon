@@ -80,14 +80,26 @@ data class AutoModeZone(
     }
 
     /**
-     * Check if the current temperature is below the minimum (needs heating).
+     * Check if the current temperature is below the minimum (needs heating to start).
      */
     fun needsHeating(currentTemp: Double): Boolean = currentTemp < minTemp
 
     /**
-     * Check if the current temperature is above the maximum (needs cooling).
+     * Check if the current temperature is above the maximum (needs cooling to start).
      */
     fun needsCooling(currentTemp: Double): Boolean = currentTemp > maxTemp
+
+    /**
+     * Check if heating should continue (hysteresis not yet reached).
+     * Heating continues until temp reaches minTemp + HYSTERESIS.
+     */
+    fun shouldContinueHeating(currentTemp: Double): Boolean = currentTemp < minTemp + HYSTERESIS
+
+    /**
+     * Check if cooling should continue (hysteresis not yet reached).
+     * Cooling continues until temp reaches maxTemp - HYSTERESIS.
+     */
+    fun shouldContinueCooling(currentTemp: Double): Boolean = currentTemp > maxTemp - HYSTERESIS
 
     /**
      * Check if the current temperature is within the acceptable range.

@@ -2,6 +2,7 @@ package com.rw.aircon.controller
 
 import com.rw.aircon.dto.*
 import com.rw.aircon.service.AutoModeExecutionService
+import com.rw.aircon.service.AutoModeLoggingService
 import com.rw.aircon.service.AutoModeService
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
@@ -20,7 +21,8 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/auto-mode")
 class AutoModeController(
     private val autoModeService: AutoModeService,
-    private val autoModeExecutionService: AutoModeExecutionService
+    private val autoModeExecutionService: AutoModeExecutionService,
+    private val autoModeLoggingService: AutoModeLoggingService
 ) {
     private val log = LoggerFactory.getLogger(AutoModeController::class.java)
 
@@ -86,6 +88,31 @@ class AutoModeController(
         log.debug("GET /api/auto-mode/status - Getting Auto Mode status")
         val status = autoModeExecutionService.getStatus()
         return ResponseEntity.ok(status)
+    }
+
+    /**
+     * Get the Auto Mode action log.
+     * Returns a history of automatic adjustments made by the system.
+     *
+     * @param limit Maximum number of entries to return (default: 50)
+     * @param action Optional filter by action type (heat_on, cool_on, system_off, mode_change)
+     */
+    @GetMapping("/log")
+    fun getLog(
+        @RequestParam(defaultValue = "50") limit: Int,
+        @RequestParam(required = false) action: String?
+    ): ResponseEntity<AutoModeLogListResponse> {
+        log.debug("GET /api/auto-mode/log - Getting Auto Mode log (limit={}, action={})", limit, action)
+
+        val effectiveLimit = limit.coerceIn(1, 500)
+
+        val response = if (action != null) {
+            autoModeLoggingService.getLogsByAction(action, effectiveLimit)
+        } else {
+            autoModeLoggingService.getLogs(effectiveLimit)
+        }
+
+        return ResponseEntity.ok(response)
     }
 
     /**

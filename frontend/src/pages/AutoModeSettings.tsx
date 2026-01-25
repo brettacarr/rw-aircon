@@ -1,4 +1,5 @@
 import { AutoModeConfigPanel } from "@/components/AutoModeConfigPanel"
+import { AutoModeLogViewer } from "@/components/AutoModeLogViewer"
 import { useControlMode } from "@/hooks/useControlMode"
 import { useActivateAutoMode, useDeactivateAutoMode, useAutoModeStatus } from "@/hooks/useAutoMode"
 import { Button } from "@/components/ui/button"
@@ -206,6 +207,9 @@ export function AutoModeSettings({ onBack }: AutoModeSettingsProps) {
 
       {/* Configuration Panel */}
       <AutoModeConfigPanel />
+
+      {/* Activity Log */}
+      <AutoModeLogViewer />
     </div>
   )
 }

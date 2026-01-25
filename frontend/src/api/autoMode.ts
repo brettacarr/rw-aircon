@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AutoModeConfig, AutoModeConfigRequest, AutoModeStatus } from '@/types'
+import type { AutoModeConfig, AutoModeConfigRequest, AutoModeStatus, AutoModeLogList } from '@/types'
 
 /**
  * Get the current Auto Mode configuration
@@ -46,5 +46,25 @@ export async function deactivateAutoMode(): Promise<AutoModeConfig> {
  */
 export async function getAutoModeStatus(): Promise<AutoModeStatus> {
   const response = await apiClient.get<AutoModeStatus>('/auto-mode/status')
+  return response.data
+}
+
+/**
+ * Get Auto Mode action log
+ * Returns history of automatic adjustments made by the system
+ *
+ * @param limit Maximum number of entries to return (default: 50)
+ * @param action Optional filter by action type
+ */
+export async function getAutoModeLogs(
+  limit: number = 50,
+  action?: string
+): Promise<AutoModeLogList> {
+  const params = new URLSearchParams()
+  params.set('limit', limit.toString())
+  if (action) {
+    params.set('action', action)
+  }
+  const response = await apiClient.get<AutoModeLogList>(`/auto-mode/log?${params.toString()}`)
   return response.data
 }

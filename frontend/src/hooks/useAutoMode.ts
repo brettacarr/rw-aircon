@@ -5,6 +5,7 @@ import {
   activateAutoMode,
   deactivateAutoMode,
   getAutoModeStatus,
+  getAutoModeLogs,
 } from '@/api/autoMode'
 import type { AutoModeConfigRequest } from '@/types'
 import { SYSTEM_STATUS_QUERY_KEY } from './useSystemStatus'
@@ -12,6 +13,7 @@ import { CONTROL_MODE_QUERY_KEY } from './useControlMode'
 
 export const AUTO_MODE_CONFIG_QUERY_KEY = ['autoModeConfig'] as const
 export const AUTO_MODE_STATUS_QUERY_KEY = ['autoModeStatus'] as const
+export const AUTO_MODE_LOG_QUERY_KEY = ['autoModeLog'] as const
 
 /**
  * Hook to fetch Auto Mode configuration
@@ -88,5 +90,20 @@ export function useDeactivateAutoMode() {
       queryClient.invalidateQueries({ queryKey: CONTROL_MODE_QUERY_KEY })
       queryClient.invalidateQueries({ queryKey: SYSTEM_STATUS_QUERY_KEY })
     },
+  })
+}
+
+/**
+ * Hook to fetch Auto Mode action logs
+ * Returns history of automatic adjustments made by the system
+ *
+ * @param limit Maximum number of entries to return
+ * @param actionFilter Optional filter by action type
+ */
+export function useAutoModeLogs(limit: number = 50, actionFilter?: string) {
+  return useQuery({
+    queryKey: [...AUTO_MODE_LOG_QUERY_KEY, limit, actionFilter] as const,
+    queryFn: () => getAutoModeLogs(limit, actionFilter),
+    staleTime: 30000, // Consider stale after 30 seconds
   })
 }

@@ -134,3 +134,21 @@ CREATE INDEX IF NOT EXISTS idx_auto_mode_zone_zone_id ON auto_mode_zone(zone_id)
 INSERT OR IGNORE INTO auto_mode_zone (zone_id, enabled, min_temp, max_temp) VALUES (1, 1, 20.0, 24.0);
 INSERT OR IGNORE INTO auto_mode_zone (zone_id, enabled, min_temp, max_temp) VALUES (2, 0, 20.0, 24.0);
 INSERT OR IGNORE INTO auto_mode_zone (zone_id, enabled, min_temp, max_temp) VALUES (3, 1, 20.0, 24.0);
+
+-- Auto Mode log table for tracking automatic actions
+-- Records each heating/cooling/off decision made by Auto Mode
+CREATE TABLE IF NOT EXISTS auto_mode_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    action TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    triggering_zone_id INTEGER,
+    system_mode TEXT,
+    new_system_mode TEXT,
+    zone_temps TEXT,
+    FOREIGN KEY (triggering_zone_id) REFERENCES zone(id)
+);
+
+-- Indexes for auto_mode_log
+CREATE INDEX IF NOT EXISTS idx_auto_mode_log_timestamp ON auto_mode_log(timestamp);
+CREATE INDEX IF NOT EXISTS idx_auto_mode_log_action ON auto_mode_log(action);

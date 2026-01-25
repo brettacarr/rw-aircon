@@ -338,3 +338,36 @@ export interface ZoneStatusInfo {
   maxTemp: number
   status: AutoModeZoneStatus
 }
+
+// ============ Auto Mode Log Types ============
+
+// Auto Mode action types
+export type AutoModeAction = "heat_on" | "cool_on" | "system_off" | "mode_change"
+
+// Zone temperature snapshot in a log entry
+export interface AutoModeLogZoneTemp {
+  zoneId: number
+  zoneName: string
+  currentTemp: number
+  minTemp: number
+  maxTemp: number
+}
+
+// Single Auto Mode log entry
+export interface AutoModeLogEntry {
+  id: number
+  timestamp: string // ISO timestamp
+  action: AutoModeAction
+  reason: string
+  triggeringZoneId: number | null
+  triggeringZoneName: string | null
+  systemMode: string | null
+  newSystemMode: string | null
+  zoneTemps: AutoModeLogZoneTemp[] | null
+}
+
+// Auto Mode log list response
+export interface AutoModeLogList {
+  logs: AutoModeLogEntry[]
+  total: number
+}

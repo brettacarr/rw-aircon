@@ -15,11 +15,11 @@ This is a greenfield project - no source code exists yet. Implementation proceed
 
 ---
 
-## Project Status: Phase 5B Complete (Auto Mode UI)
+## Project Status: Phase 5C Complete (Auto Mode Logging)
 
 **Last Updated:** 2026-01-25
-**Status:** Phases 1-4 complete. Phase 5A (Auto Mode backend) complete. Phase 5B (Auto Mode UI) complete.
-**Next Action:** Implement Phase 5C (Auto Mode Logging) - backend logging and log viewer for auto mode execution history.
+**Status:** Phases 1-4 complete. Phase 5A (Auto Mode backend) complete. Phase 5B (Auto Mode UI) complete. Phase 5C (Auto Mode Logging) complete.
+**Next Action:** Address Quality Improvements (Phases 1-4) - backend bug fixes, testing, architecture improvements, and frontend enhancements.
 
 **Critical Bug Fixed (2026-01-20):** The `findHourlyAveragesByZoneIdAndTimestampBetween` repository method was missing, causing the backend to fail to compile. This has been fixed.
 
@@ -89,7 +89,7 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 | 6 | 4.1-4.4 | Manual override with hold duration | Complete |
 | 7 | 5A | Auto Mode - Core backend | Complete |
 | 8 | 5B | Auto Mode - UI enhancements | Complete |
-| 9 | 5C | Auto Mode - Logging | Not Started |
+| 9 | 5C | Auto Mode - Logging | Complete |
 | 10 | QA | Quality improvements (Phases 1-4) | In Progress |
 
 ---
@@ -466,20 +466,20 @@ Auto Mode is an intelligent climate control feature that automatically maintains
 - [x] Disable manual temperature controls when Auto Mode active (or prompt for override)
 
 ### 5C.1 Backend Auto Mode Logging (Priority: LOW)
-- [ ] Create `model/AutoModeLog.kt` entity:
+- [x] Create `model/AutoModeLog.kt` entity:
   - `id: Long`, `timestamp: Instant`
   - `action: String` (heat_on, cool_on, system_off, mode_change)
   - `reason: String`, `triggeringZoneId: Long?`
   - `systemMode: String`, `newSystemMode: String`
   - `zoneTemps: String` (JSON snapshot)
-- [ ] Create `repository/AutoModeLogRepository.kt`
-- [ ] Add logging to AutoModeExecutionService
-- [ ] `GET /api/auto-mode/log?limit=50` endpoint
+- [x] Create `repository/AutoModeLogRepository.kt`
+- [x] Add logging to AutoModeExecutionService
+- [x] `GET /api/auto-mode/log?limit=50` endpoint
 
 ### 5C.2 Frontend Log Viewing (Priority: LOW)
-- [ ] Create `src/components/AutoModeLogViewer.tsx`
-- [ ] Display action history with timestamps and reasons
-- [ ] Add to Auto Mode settings or Dashboard
+- [x] Create `src/components/AutoModeLogViewer.tsx`
+- [x] Display action history with timestamps and reasons
+- [x] Add to Auto Mode settings or Dashboard
 
 ---
 
