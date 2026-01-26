@@ -26,7 +26,8 @@ class AutoModeService(
     private val autoModeConfigRepository: AutoModeConfigRepository,
     private val autoModeZoneRepository: AutoModeZoneRepository,
     private val zoneRepository: ZoneRepository,
-    private val controlModeService: ControlModeService
+    private val controlModeService: ControlModeService,
+    private val autoModeExecutionService: AutoModeExecutionService
 ) {
     private val log = LoggerFactory.getLogger(AutoModeService::class.java)
 
@@ -107,6 +108,14 @@ class AutoModeService(
         }
 
         log.info("Auto Mode configuration updated successfully")
+
+        // Trigger evaluation to refresh status with new config values
+        // This ensures the status endpoint returns updated min/max temps immediately
+        if (isActive()) {
+            log.debug("Triggering Auto Mode evaluation to refresh status")
+            autoModeExecutionService.triggerEvaluation()
+        }
+
         return getConfig()
     }
 
@@ -136,6 +145,12 @@ class AutoModeService(
         autoModeConfigRepository.save(updatedConfig)
 
         log.info("Auto Mode activated")
+
+        // Trigger immediate evaluation to populate zone statuses
+        // This ensures the status endpoint returns zone data right away
+        log.debug("Triggering initial Auto Mode evaluation")
+        autoModeExecutionService.triggerEvaluation()
+
         return getConfig()
     }
 

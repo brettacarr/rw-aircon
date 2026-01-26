@@ -23,7 +23,7 @@ export function useAutoModeConfig() {
   return useQuery({
     queryKey: AUTO_MODE_CONFIG_QUERY_KEY,
     queryFn: getAutoModeConfig,
-    staleTime: 30000, // Consider stale after 30 seconds
+    staleTime: 5000, // Consider stale after 5 seconds for more responsive updates
   })
 }
 

@@ -8,6 +8,8 @@ import com.rw.aircon.repository.AutoModeZoneRepository
 import com.rw.aircon.repository.OverrideRepository
 import com.rw.aircon.repository.ZoneRepository
 import org.slf4j.LoggerFactory
+import org.springframework.boot.context.event.ApplicationReadyEvent
+import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.Instant
@@ -40,6 +42,24 @@ class AutoModeExecutionService(
     // Execution state for status reporting
     @Volatile
     private var lastExecutionState: ExecutionState = ExecutionState.initial()
+
+    /**
+     * Initialize Auto Mode status on application startup.
+     * If Auto Mode was active before restart, trigger an evaluation to populate zone statuses.
+     */
+    @EventListener(ApplicationReadyEvent::class)
+    fun onApplicationReady() {
+        if (controlModeService.isAutoMode()) {
+            log.info("Auto Mode is active on startup, triggering initial evaluation")
+            try {
+                triggerEvaluation()
+            } catch (e: Exception) {
+                log.warn("Failed to run initial Auto Mode evaluation: {}", e.message)
+            }
+        } else {
+            log.debug("Auto Mode is not active on startup, skipping initial evaluation")
+        }
+    }
 
     /**
      * Scheduled task that runs every minute to evaluate and apply Auto Mode settings.
@@ -381,13 +401,15 @@ class AutoModeExecutionService(
         when (decision.action) {
             AutoModeAction.HEAT -> {
                 log.info("Auto Mode: Heating to {}°C - {}", decision.targetTemp, decision.reason)
-                // Turn on system, set mode to heat, set target temp
+                // Turn on system, set mode to heat, set target temp, and open enabled zones
                 try {
                     myAirClient.setSystemInfo(mapOf("state" to "on"))
                     myAirClient.setSystemInfo(mapOf("mode" to "heat"))
                     decision.targetTemp?.let { temp ->
                         myAirClient.setSystemInfo(mapOf("setTemp" to temp.toInt().toString()))
                     }
+                    // Open all enabled zones so they receive conditioned air
+                    openEnabledZones(zoneStatusList)
                     // Log the heating action
                     autoModeLoggingService.logHeatingAction(
                         reason = decision.reason,
@@ -401,13 +423,15 @@ class AutoModeExecutionService(
             }
             AutoModeAction.COOL -> {
                 log.info("Auto Mode: Cooling to {}°C - {}", decision.targetTemp, decision.reason)
-                // Turn on system, set mode to cool, set target temp
+                // Turn on system, set mode to cool, set target temp, and open enabled zones
                 try {
                     myAirClient.setSystemInfo(mapOf("state" to "on"))
                     myAirClient.setSystemInfo(mapOf("mode" to "cool"))
                     decision.targetTemp?.let { temp ->
                         myAirClient.setSystemInfo(mapOf("setTemp" to temp.toInt().toString()))
                     }
+                    // Open all enabled zones so they receive conditioned air
+                    openEnabledZones(zoneStatusList)
                     // Log the cooling action
                     autoModeLoggingService.logCoolingAction(
                         reason = decision.reason,
@@ -432,6 +456,25 @@ class AutoModeExecutionService(
                 } catch (e: Exception) {
                     log.error("Failed to turn system off: {}", e.message)
                 }
+            }
+        }
+    }
+
+    /**
+     * Open all enabled zones so they receive conditioned air.
+     * This ensures zones included in Auto Mode config are actually active when heating/cooling.
+     */
+    private fun openEnabledZones(zoneStatusList: List<ZoneTemperatureStatus>) {
+        for (zone in zoneStatusList) {
+            try {
+                val result = myAirClient.setZone(zone.myAirZoneId, mapOf("state" to "open"))
+                if (result) {
+                    log.debug("Auto Mode: Opened zone {} ({})", zone.zoneName, zone.myAirZoneId)
+                } else {
+                    log.warn("Auto Mode: Failed to open zone {} ({})", zone.zoneName, zone.myAirZoneId)
+                }
+            } catch (e: Exception) {
+                log.error("Auto Mode: Error opening zone {} ({}): {}", zone.zoneName, zone.myAirZoneId, e.message)
             }
         }
     }

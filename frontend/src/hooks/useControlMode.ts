@@ -13,7 +13,7 @@ export function useControlMode() {
   return useQuery({
     queryKey: CONTROL_MODE_QUERY_KEY,
     queryFn: getControlMode,
-    staleTime: 30000, // Consider stale after 30 seconds
+    staleTime: 5000, // Consider stale after 5 seconds for responsive mode switching
   })
 }
 

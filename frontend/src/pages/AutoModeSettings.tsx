@@ -1,11 +1,12 @@
 import { AutoModeConfigPanel } from "@/components/AutoModeConfigPanel"
 import { AutoModeLogViewer } from "@/components/AutoModeLogViewer"
+import { AutoModeBanner } from "@/components/AutoModeBanner"
 import { useControlMode } from "@/hooks/useControlMode"
-import { useActivateAutoMode, useDeactivateAutoMode, useAutoModeStatus } from "@/hooks/useAutoMode"
+import { useActivateAutoMode, useAutoModeStatus } from "@/hooks/useAutoMode"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Play, Square, Thermometer, TrendingUp, TrendingDown, Check } from "lucide-react"
+import { ArrowLeft, Play, Thermometer } from "lucide-react"
 
 interface AutoModeSettingsProps {
   onBack?: () => void
@@ -19,40 +20,8 @@ export function AutoModeSettings({ onBack }: AutoModeSettingsProps) {
   const { data: controlMode } = useControlMode()
   const { data: status } = useAutoModeStatus(controlMode?.mode === "auto")
   const activateAutoMode = useActivateAutoMode()
-  const deactivateAutoMode = useDeactivateAutoMode()
 
   const isAutoModeActive = controlMode?.mode === "auto"
-
-  // Get status display info
-  const getStatusInfo = () => {
-    if (!isAutoModeActive || !status) return null
-
-    switch (status.systemState) {
-      case "heating":
-        return {
-          icon: TrendingUp,
-          label: `Heating to ${status.targetTemp}°C`,
-          color: "text-orange-600",
-          bgColor: "bg-orange-50",
-        }
-      case "cooling":
-        return {
-          icon: TrendingDown,
-          label: `Cooling to ${status.targetTemp}°C`,
-          color: "text-blue-600",
-          bgColor: "bg-blue-50",
-        }
-      default:
-        return {
-          icon: Check,
-          label: "All zones in range - System off",
-          color: "text-green-600",
-          bgColor: "bg-green-50",
-        }
-    }
-  }
-
-  const statusInfo = getStatusInfo()
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -74,39 +43,8 @@ export function AutoModeSettings({ onBack }: AutoModeSettingsProps) {
         </div>
       </div>
 
-      {/* Status Card - shows when Auto Mode is active */}
-      {isAutoModeActive && statusInfo && (
-        <Card className={statusInfo.bgColor}>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Badge variant="default" className="bg-green-600">
-                  Active
-                </Badge>
-                <div className="flex items-center gap-2">
-                  <statusInfo.icon className={`h-5 w-5 ${statusInfo.color}`} />
-                  <span className={`font-medium ${statusInfo.color}`}>
-                    {statusInfo.label}
-                  </span>
-                </div>
-                {status?.triggeringZone && status.systemState !== "off" && (
-                  <span className="text-sm text-muted-foreground">
-                    ({status.triggeringZone.zoneName}: {status.triggeringZone.currentTemp.toFixed(1)}°C)
-                  </span>
-                )}
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => deactivateAutoMode.mutate()}
-                disabled={deactivateAutoMode.isPending}
-              >
-                <Square className="h-4 w-4 mr-2" />
-                {deactivateAutoMode.isPending ? "Stopping..." : "Stop Auto Mode"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Auto Mode Banner - shows when Auto Mode is active */}
+      <AutoModeBanner />
 
       {/* Activation Card - shows when Auto Mode is not active */}
       {!isAutoModeActive && (

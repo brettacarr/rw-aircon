@@ -2,7 +2,7 @@ import { useAutoModeStatus, useDeactivateAutoMode } from "@/hooks/useAutoMode"
 import { useControlMode } from "@/hooks/useControlMode"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Thermometer, TrendingUp, TrendingDown, Check, X } from "lucide-react"
+import { Thermometer, TrendingUp, TrendingDown, X } from "lucide-react"
 
 /**
  * Banner component that displays when Auto Mode is active
@@ -28,7 +28,7 @@ export function AutoModeBanner() {
     )
   }
 
-  // Get icon and color based on system state
+  // Get icon and color based on system state (only for heating/cooling)
   const getStateDisplay = () => {
     switch (status.systemState) {
       case "heating":
@@ -48,38 +48,39 @@ export function AutoModeBanner() {
           label: `Cooling to ${status.targetTemp}°C`,
         }
       default:
-        return {
-          icon: Check,
-          color: "text-green-600",
-          bgColor: "bg-green-50 border-green-200",
-          badgeColor: "bg-green-100 text-green-800 border-green-300",
-          label: "All zones in range",
-        }
+        return null
     }
   }
 
   const stateDisplay = getStateDisplay()
-  const StateIcon = stateDisplay.icon
+
+  // Default styling when system is off
+  const bgColor = stateDisplay?.bgColor ?? "bg-green-50 border-green-200"
+  const badgeColor = stateDisplay?.badgeColor ?? "bg-green-100 text-green-800 border-green-300"
 
   return (
     <div
-      className={`${stateDisplay.bgColor} border rounded-lg p-3 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`}
+      className={`${bgColor} border rounded-lg p-3 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`}
     >
       <div className="flex items-center gap-3">
-        <Badge variant="outline" className={stateDisplay.badgeColor}>
+        <Badge variant="outline" className={badgeColor}>
           <Thermometer className="h-3.5 w-3.5 mr-1" />
           Auto Mode
         </Badge>
-        <div className="flex items-center gap-2">
-          <StateIcon className={`h-4 w-4 ${stateDisplay.color}`} />
-          <span className={`text-sm font-medium ${stateDisplay.color}`}>
-            {stateDisplay.label}
-          </span>
-        </div>
-        {status.triggeringZone && status.systemState !== "off" && (
-          <span className="text-sm text-muted-foreground">
-            ({status.triggeringZone.zoneName}: {status.triggeringZone.currentTemp.toFixed(1)}°C)
-          </span>
+        {stateDisplay && (
+          <>
+            <div className="flex items-center gap-2">
+              <stateDisplay.icon className={`h-4 w-4 ${stateDisplay.color}`} />
+              <span className={`text-sm font-medium ${stateDisplay.color}`}>
+                {stateDisplay.label}
+              </span>
+            </div>
+            {status.triggeringZone && (
+              <span className="text-sm text-muted-foreground">
+                ({status.triggeringZone.zoneName}: {status.triggeringZone.currentTemp.toFixed(1)}°C)
+              </span>
+            )}
+          </>
         )}
       </div>
       <Button
