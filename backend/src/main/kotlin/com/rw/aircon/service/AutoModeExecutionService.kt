@@ -23,9 +23,10 @@ import java.time.Instant
  * 2. Check if Auto Mode is active - if not, skip execution
  * 3. Check myZone temperature first (highest priority)
  * 4. Check other enabled zones
- * 5. If all zones in range, turn system off
+ * 5. If all zones in range, hold current state (no commands sent)
  *
- * Temperature targets include 0.5°C hysteresis to prevent rapid cycling.
+ * Targets are exact boundaries (minTemp for heating, maxTemp for cooling).
+ * No hysteresis — the HVAC unit's compressor protection handles cycling.
  */
 @Service
 class AutoModeExecutionService(
@@ -166,97 +167,97 @@ class AutoModeExecutionService(
             return
         }
 
-        // Get current system mode for logging and hysteresis
+        // Get current system mode for logging
         val systemIsOn = systemInfo.state == "on"
         val currentMode = if (systemIsOn) systemInfo.mode ?: "unknown" else "off"
 
-        // Determine action based on zone temperatures (pass current mode for hysteresis)
-        val decision = determineAction(zoneStatusList, systemIsOn, currentMode)
+        // Determine action based on zone temperatures
+        val decision = determineAction(zoneStatusList)
 
-        // Update execution state for status reporting
-        lastExecutionState = ExecutionState(
-            systemState = decision.action.name.lowercase(),
-            targetTemp = decision.targetTemp,
-            reason = decision.reason,
-            triggeringZone = decision.triggeringZone?.let { tz ->
-                TriggeringZoneInfo(
-                    zoneId = tz.zoneId,
-                    zoneName = tz.zoneName,
-                    currentTemp = tz.currentTemp,
-                    deviation = tz.deviation
-                )
-            },
-            zoneStatuses = zoneStatusList.map { zs ->
-                ZoneStatusInfo(
-                    zoneId = zs.zoneId,
-                    zoneName = zs.zoneName,
-                    enabled = true,
-                    currentTemp = zs.currentTemp,
-                    minTemp = zs.config.minTemp,
-                    maxTemp = zs.config.maxTemp,
-                    status = when {
-                        zs.currentTemp < zs.config.minTemp -> "below_min"
-                        zs.currentTemp > zs.config.maxTemp -> "above_max"
-                        else -> "in_range"
-                    }
-                )
-            },
-            lastChecked = Instant.now()
-        )
+        // Build zone status list for reporting
+        val zoneStatuses = zoneStatusList.map { zs ->
+            ZoneStatusInfo(
+                zoneId = zs.zoneId,
+                zoneName = zs.zoneName,
+                enabled = true,
+                currentTemp = zs.currentTemp,
+                minTemp = zs.config.minTemp,
+                maxTemp = zs.config.maxTemp,
+                status = when {
+                    zs.currentTemp < zs.config.minTemp -> "below_min"
+                    zs.currentTemp > zs.config.maxTemp -> "above_max"
+                    else -> "in_range"
+                }
+            )
+        }
 
-        // Apply the decision and log the action
-        applyDecision(decision, currentMode, zoneStatusList)
+        if (decision != null) {
+            // Update execution state for status reporting
+            lastExecutionState = ExecutionState(
+                systemState = decision.action.name.lowercase(),
+                targetTemp = decision.targetTemp,
+                reason = decision.reason,
+                triggeringZone = decision.triggeringZone?.let { tz ->
+                    TriggeringZoneInfo(
+                        zoneId = tz.zoneId,
+                        zoneName = tz.zoneName,
+                        currentTemp = tz.currentTemp,
+                        deviation = tz.deviation
+                    )
+                },
+                zoneStatuses = zoneStatuses,
+                lastChecked = Instant.now()
+            )
+
+            // Apply the decision and log the action
+            applyDecision(decision, currentMode, zoneStatusList)
+        } else {
+            // All zones in range — hold current state, send no commands
+            log.debug("Auto Mode: All zones in range, holding current state")
+            lastExecutionState = ExecutionState(
+                systemState = currentMode,
+                targetTemp = null,
+                reason = "All zones in range - holding",
+                triggeringZone = null,
+                zoneStatuses = zoneStatuses,
+                lastChecked = Instant.now()
+            )
+        }
     }
 
     /**
      * Determine what action to take based on zone temperatures.
+     * Returns null when all zones are in range (hold — no commands needed).
      *
-     * Hysteresis logic:
-     * - When starting: heating triggers at temp < minTemp, cooling at temp > maxTemp
-     * - When continuing: heating continues until temp >= minTemp + 0.5,
-     *   cooling continues until temp <= maxTemp - 0.5
+     * Heating triggers at temp < minTemp, cooling at temp > maxTemp.
+     * No hysteresis — targets are exact boundaries.
      */
     private fun determineAction(
-        zones: List<ZoneTemperatureStatus>,
-        systemIsOn: Boolean,
-        currentMode: String
-    ): AutoModeDecision {
+        zones: List<ZoneTemperatureStatus>
+    ): AutoModeDecision? {
         // Separate myZone from other zones (myZone has priority)
         val myZone = zones.find { it.isMyZone }
         val otherZones = zones.filter { !it.isMyZone }
 
         // Step 1: Check myZone first (if any zone is currently myZone)
         if (myZone != null) {
-            val myZoneDecision = checkZoneTemperature(myZone, systemIsOn, currentMode)
+            val myZoneDecision = checkZoneTemperature(myZone)
             if (myZoneDecision != null) {
                 return myZoneDecision
             }
         }
 
-        // Step 2: Check other zones
-        // Find zone with largest deviation from range (or needs to continue current mode)
+        // Step 2: Check other zones — find zone with largest deviation from range
         var worstZone: ZoneTemperatureStatus? = null
         var worstDeviation = 0.0
-        var worstAction: AutoModeAction = AutoModeAction.OFF
+        var worstAction: AutoModeAction = AutoModeAction.HEAT
 
         for (zone in (if (myZone != null) otherZones else zones)) {
-            // Check if zone needs heating (either starting new or continuing)
-            val needsHeat = if (systemIsOn && currentMode == "heat") {
-                zone.config.shouldContinueHeating(zone.currentTemp)
-            } else {
-                zone.config.needsHeating(zone.currentTemp)
-            }
-
-            // Check if zone needs cooling (either starting new or continuing)
-            val needsCool = if (systemIsOn && currentMode == "cool") {
-                zone.config.shouldContinueCooling(zone.currentTemp)
-            } else {
-                zone.config.needsCooling(zone.currentTemp)
-            }
+            val needsHeat = zone.config.needsHeating(zone.currentTemp)
+            val needsCool = zone.config.needsCooling(zone.currentTemp)
 
             when {
                 needsHeat -> {
-                    // Calculate deviation from target (hysteresis target when continuing)
                     val target = zone.config.getHeatingTarget()
                     val deviation = target - zone.currentTemp
                     if (deviation > worstDeviation) {
@@ -266,7 +267,6 @@ class AutoModeExecutionService(
                     }
                 }
                 needsCool -> {
-                    // Calculate deviation from target (hysteresis target when continuing)
                     val target = zone.config.getCoolingTarget()
                     val deviation = zone.currentTemp - target
                     if (deviation > worstDeviation) {
@@ -286,17 +286,10 @@ class AutoModeExecutionService(
                 worstZone.config.getCoolingTarget()
             }
 
-            // Determine if this is continuing an existing operation
-            val isContinuing = systemIsOn &&
-                ((worstAction == AutoModeAction.HEAT && currentMode == "heat") ||
-                 (worstAction == AutoModeAction.COOL && currentMode == "cool"))
-
-            val reasonSuffix = if (isContinuing) " (continuing to target)" else ""
-
             return AutoModeDecision(
                 action = worstAction,
                 targetTemp = targetTemp,
-                reason = "${worstZone.zoneName} is ${String.format("%.1f", worstDeviation)}°C from target$reasonSuffix",
+                reason = "${worstZone.zoneName} is ${String.format("%.1f", worstDeviation)}°C from target",
                 triggeringZone = TriggeringZone(
                     zoneId = worstZone.zoneId,
                     zoneName = worstZone.zoneName,
@@ -306,50 +299,27 @@ class AutoModeExecutionService(
             )
         }
 
-        // Step 3: All zones have reached their targets - turn system off
-        return AutoModeDecision(
-            action = AutoModeAction.OFF,
-            targetTemp = null,
-            reason = "All zones have reached target temperature",
-            triggeringZone = null
-        )
+        // Step 3: All zones are in range — hold (return null)
+        return null
     }
 
     /**
      * Check a single zone's temperature and return a decision if action is needed.
-     * Applies hysteresis when the system is already heating/cooling.
+     * No hysteresis — only triggers when temp is outside min/max boundaries.
      */
     private fun checkZoneTemperature(
-        zone: ZoneTemperatureStatus,
-        systemIsOn: Boolean,
-        currentMode: String
+        zone: ZoneTemperatureStatus
     ): AutoModeDecision? {
         val config = zone.config
 
-        // Check if zone needs heating (either starting new or continuing)
-        val needsHeat = if (systemIsOn && currentMode == "heat") {
-            config.shouldContinueHeating(zone.currentTemp)
-        } else {
-            config.needsHeating(zone.currentTemp)
-        }
-
-        // Check if zone needs cooling (either starting new or continuing)
-        val needsCool = if (systemIsOn && currentMode == "cool") {
-            config.shouldContinueCooling(zone.currentTemp)
-        } else {
-            config.needsCooling(zone.currentTemp)
-        }
-
         return when {
-            needsHeat -> {
+            config.needsHeating(zone.currentTemp) -> {
                 val target = config.getHeatingTarget()
                 val deviation = target - zone.currentTemp
-                val isContinuing = systemIsOn && currentMode == "heat"
-                val reasonSuffix = if (isContinuing) " (continuing to target)" else ""
                 AutoModeDecision(
                     action = AutoModeAction.HEAT,
                     targetTemp = target,
-                    reason = "${zone.zoneName} (myZone) is ${String.format("%.1f", deviation)}°C from target$reasonSuffix",
+                    reason = "${zone.zoneName} (myZone) is ${String.format("%.1f", deviation)}°C from target",
                     triggeringZone = TriggeringZone(
                         zoneId = zone.zoneId,
                         zoneName = zone.zoneName,
@@ -358,15 +328,13 @@ class AutoModeExecutionService(
                     )
                 )
             }
-            needsCool -> {
+            config.needsCooling(zone.currentTemp) -> {
                 val target = config.getCoolingTarget()
                 val deviation = zone.currentTemp - target
-                val isContinuing = systemIsOn && currentMode == "cool"
-                val reasonSuffix = if (isContinuing) " (continuing to target)" else ""
                 AutoModeDecision(
                     action = AutoModeAction.COOL,
                     targetTemp = target,
-                    reason = "${zone.zoneName} (myZone) is ${String.format("%.1f", deviation)}°C from target$reasonSuffix",
+                    reason = "${zone.zoneName} (myZone) is ${String.format("%.1f", deviation)}°C from target",
                     triggeringZone = TriggeringZone(
                         zoneId = zone.zoneId,
                         zoneName = zone.zoneName,
@@ -375,7 +343,7 @@ class AutoModeExecutionService(
                     )
                 )
             }
-            else -> null // Zone has reached target
+            else -> null // Zone is in range
         }
     }
 
@@ -443,20 +411,6 @@ class AutoModeExecutionService(
                     log.error("Failed to apply cooling decision: {}", e.message)
                 }
             }
-            AutoModeAction.OFF -> {
-                log.info("Auto Mode: Turning off - {}", decision.reason)
-                try {
-                    myAirClient.setSystemInfo(mapOf("state" to "off"))
-                    // Log the system off action
-                    autoModeLoggingService.logSystemOffAction(
-                        reason = decision.reason,
-                        previousMode = previousMode,
-                        zoneTemps = zoneSnapshots
-                    )
-                } catch (e: Exception) {
-                    log.error("Failed to turn system off: {}", e.message)
-                }
-            }
         }
     }
 
@@ -520,7 +474,7 @@ class AutoModeExecutionService(
     // Internal data classes
 
     private enum class AutoModeAction {
-        HEAT, COOL, OFF
+        HEAT, COOL
     }
 
     private data class AutoModeDecision(

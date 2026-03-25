@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getSystemStatus } from '@/api/system'
 
-export const SYSTEM_STATUS_QUERY_KEY = ['systemStatus']
+export const SYSTEM_STATUS_QUERY_KEY = ['systemStatus'] as const
 
 export function useSystemStatus() {
   return useQuery({

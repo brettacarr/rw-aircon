@@ -15,11 +15,11 @@ This is a greenfield project - no source code exists yet. Implementation proceed
 
 ---
 
-## Project Status: Phase 5C Complete (Auto Mode Logging)
+## Project Status: Phase 5D Complete (Auto Mode - Hold at Boundary)
 
-**Last Updated:** 2026-01-25
-**Status:** Phases 1-4 complete. Phase 5A (Auto Mode backend) complete. Phase 5B (Auto Mode UI) complete. Phase 5C (Auto Mode Logging) complete.
-**Next Action:** Address Quality Improvements (Phases 1-4) - backend bug fixes, testing, architecture improvements, and frontend enhancements.
+**Last Updated:** 2026-03-25
+**Status:** Phases 1-5D complete. All Auto Mode sub-phases done.
+**Next Action:** Quality improvements (QA phase) or next feature work.
 
 **Critical Bug Fixed (2026-01-20):** The `findHourlyAveragesByZoneIdAndTimestampBetween` repository method was missing, causing the backend to fail to compile. This has been fixed.
 
@@ -90,7 +90,8 @@ The actual MyAir API response (`docs/myapi-response.json`) includes valuable fie
 | 7 | 5A | Auto Mode - Core backend | Complete |
 | 8 | 5B | Auto Mode - UI enhancements | Complete |
 | 9 | 5C | Auto Mode - Logging | Complete |
-| 10 | QA | Quality improvements (Phases 1-4) | In Progress |
+| 10 | 5D | Auto Mode - Hold at Boundary | Complete |
+| 11 | QA | Quality improvements (Phases 1-4) | Pending |
 
 ---
 
@@ -480,6 +481,50 @@ Auto Mode is an intelligent climate control feature that automatically maintains
 - [x] Create `src/components/AutoModeLogViewer.tsx`
 - [x] Display action history with timestamps and reasons
 - [x] Add to Auto Mode settings or Dashboard
+
+---
+
+## Phase 5D: Auto Mode - Hold at Boundary (Priority: HIGH)
+
+**Spec change:** When all zones are in range, the system now holds at the boundary and stays ON rather than turning OFF. Hysteresis (the 0.5°C overshoot) is removed entirely. Heating targets exactly `minTemp`, cooling targets exactly `maxTemp`. The HVAC unit's built-in compressor protection handles hardware-level cycling.
+
+See `specs/05-auto-mode.md` for updated decision logic and target temperature calculation.
+
+### 5D.1 Backend - Remove Hysteresis from AutoModeZone (Priority: HIGH)
+- [x] In `AutoModeZone.kt`, remove the `HYSTERESIS` constant
+- [x] Update `getHeatingTarget()` to return `minTemp` (was `minTemp + HYSTERESIS`)
+- [x] Update `getCoolingTarget()` to return `maxTemp` (was `maxTemp - HYSTERESIS`)
+- [x] Remove `shouldContinueHeating()` method (no longer needed)
+- [x] Remove `shouldContinueCooling()` method (no longer needed)
+
+### 5D.2 Backend - Update Execution Logic (Priority: HIGH)
+- [x] In `AutoModeExecutionService.kt`, remove the `OFF` action from `AutoModeAction` enum
+- [x] Remove `systemIsOn` and `currentMode` parameters from `determineAction()` — hysteresis continuation logic is no longer needed
+- [x] Remove `shouldContinueHeating`/`shouldContinueCooling` branches from `checkZoneTemperature()` and the other-zones loop
+- [x] Replace the "all zones in range → turn OFF" step with "all zones in range → do nothing (hold)"
+- [x] Remove the `applyDecision` branch for `AutoModeAction.OFF` (no longer turns system off)
+- [x] Remove the `system off` log call from `AutoModeLoggingService` invocations in `applyDecision`
+- [x] Update `executeAutoMode()` to skip calling `applyDecision` entirely when all zones are in range (no command needed)
+
+### 5D.3 Backend - Update Status Reporting (Priority: MEDIUM)
+- [x] Update the `reason` string when all zones are in range from `"All zones have reached target temperature"` to `"All zones in range - holding"`
+- [x] Update `systemState` when holding to reflect the current live system state (heat/cool) rather than `"off"`
+
+### 5D.4 Backend - Update Tests (Priority: HIGH)
+- [x] In `AutoModeExecutionServiceTest.kt`, remove tests that assert the system turns off when zones are in range
+- [x] Add test: when all zones are in range, no API command is sent and system remains on
+- [x] Add tests for holding at exact min/max boundaries
+- [x] Add test for holding when system is off and zones in range
+- [x] Add test for getStatus reporting "holding" when all zones in range
+- [x] Update existing heating/cooling tests to use exact `minTemp`/`maxTemp` targets (remove `+ 0.5` / `- 0.5` assertions)
+- [x] No AutoModeZoneTest existed — hysteresis methods removed from model directly
+
+### 5D.5 Frontend - Update Status Display (Priority: MEDIUM)
+- [x] Updated AutoModeBanner to show "All zones in range - Holding" with green styling and check icon
+- [x] Removed UI state that showed the system as off due to auto mode
+- [x] AutoModeLogViewer: kept `system_off` filter for historical log entries but this action no longer occurs
+
+**Bug fix (pre-existing):** Fixed `AutoModeServiceTest.kt` — was missing mock for `AutoModeExecutionService` (5th constructor parameter).
 
 ---
 

@@ -26,8 +26,9 @@ export function useSetControlMode() {
 
   return useMutation({
     mutationFn: (mode: ControlMode) => setControlMode(mode),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CONTROL_MODE_QUERY_KEY })
+    onSuccess: (data) => {
+      // Use returned data to update cache immediately
+      queryClient.setQueryData(CONTROL_MODE_QUERY_KEY, data)
       // Invalidate system status as mode change may affect system behavior
       queryClient.invalidateQueries({ queryKey: SYSTEM_STATUS_QUERY_KEY })
     },

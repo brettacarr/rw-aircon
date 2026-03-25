@@ -2,11 +2,12 @@ import { useAutoModeStatus, useDeactivateAutoMode } from "@/hooks/useAutoMode"
 import { useControlMode } from "@/hooks/useControlMode"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Thermometer, TrendingUp, TrendingDown, X } from "lucide-react"
+import { Thermometer, TrendingUp, TrendingDown, Check, X } from "lucide-react"
 
 /**
- * Banner component that displays when Auto Mode is active
- * Shows current system action (heating/cooling/off) and the reason
+ * Banner component that displays when Auto Mode is active.
+ * Shows current system action: heating, cooling, or holding (all zones in range).
+ * The system never turns off in auto mode — it holds at the boundary.
  */
 export function AutoModeBanner() {
   const { data: controlMode, isLoading: isModeLoading } = useControlMode()
@@ -28,7 +29,12 @@ export function AutoModeBanner() {
     )
   }
 
-  // Get icon and color based on system state (only for heating/cooling)
+  // Determine if the system is holding (all zones in range)
+  const isHolding = status.reason?.includes("holding") || (
+    status.systemState !== "heating" && status.systemState !== "cooling" && !status.targetTemp
+  )
+
+  // Get icon and color based on system state
   const getStateDisplay = () => {
     switch (status.systemState) {
       case "heating":
@@ -48,13 +54,21 @@ export function AutoModeBanner() {
           label: `Cooling to ${status.targetTemp}°C`,
         }
       default:
+        if (isHolding) {
+          return {
+            icon: Check,
+            color: "text-green-600",
+            bgColor: "bg-green-50 border-green-200",
+            badgeColor: "bg-green-100 text-green-800 border-green-300",
+            label: "All zones in range - Holding",
+          }
+        }
         return null
     }
   }
 
   const stateDisplay = getStateDisplay()
 
-  // Default styling when system is off
   const bgColor = stateDisplay?.bgColor ?? "bg-green-50 border-green-200"
   const badgeColor = stateDisplay?.badgeColor ?? "bg-green-100 text-green-800 border-green-300"
 

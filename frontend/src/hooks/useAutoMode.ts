@@ -50,8 +50,10 @@ export function useUpdateAutoModeConfig() {
 
   return useMutation({
     mutationFn: (request: AutoModeConfigRequest) => updateAutoModeConfig(request),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: AUTO_MODE_CONFIG_QUERY_KEY })
+    onSuccess: (data) => {
+      // Use returned data to update cache immediately (no extra network request)
+      queryClient.setQueryData(AUTO_MODE_CONFIG_QUERY_KEY, data)
+      // Status needs refetch as backend recalculates zone statuses
       queryClient.invalidateQueries({ queryKey: AUTO_MODE_STATUS_QUERY_KEY })
     },
   })
@@ -66,10 +68,13 @@ export function useActivateAutoMode() {
 
   return useMutation({
     mutationFn: () => activateAutoMode(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: AUTO_MODE_CONFIG_QUERY_KEY })
-      queryClient.invalidateQueries({ queryKey: AUTO_MODE_STATUS_QUERY_KEY })
+    onSuccess: (data) => {
+      // Use returned data to update config cache immediately
+      queryClient.setQueryData(AUTO_MODE_CONFIG_QUERY_KEY, data)
+      // Control mode needs refetch to get proper changedAt timestamp
       queryClient.invalidateQueries({ queryKey: CONTROL_MODE_QUERY_KEY })
+      // Status and system status need refetch as backend state changed
+      queryClient.invalidateQueries({ queryKey: AUTO_MODE_STATUS_QUERY_KEY })
       queryClient.invalidateQueries({ queryKey: SYSTEM_STATUS_QUERY_KEY })
     },
   })
@@ -84,10 +89,13 @@ export function useDeactivateAutoMode() {
 
   return useMutation({
     mutationFn: () => deactivateAutoMode(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: AUTO_MODE_CONFIG_QUERY_KEY })
-      queryClient.invalidateQueries({ queryKey: AUTO_MODE_STATUS_QUERY_KEY })
+    onSuccess: (data) => {
+      // Use returned data to update config cache immediately
+      queryClient.setQueryData(AUTO_MODE_CONFIG_QUERY_KEY, data)
+      // Control mode needs refetch to get proper changedAt timestamp
       queryClient.invalidateQueries({ queryKey: CONTROL_MODE_QUERY_KEY })
+      // Invalidate status queries as they're no longer relevant
+      queryClient.invalidateQueries({ queryKey: AUTO_MODE_STATUS_QUERY_KEY })
       queryClient.invalidateQueries({ queryKey: SYSTEM_STATUS_QUERY_KEY })
     },
   })

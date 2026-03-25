@@ -8,6 +8,11 @@ import jakarta.persistence.*
  * Each zone can have its own min/max temperature range. When Auto Mode is active,
  * the system attempts to keep all enabled zones within their configured ranges.
  *
+ * Target temperatures are exact boundaries (no hysteresis overshoot):
+ * - Heating targets exactly minTemp
+ * - Cooling targets exactly maxTemp
+ * The HVAC unit's built-in compressor protection handles hardware-level cycling.
+ *
  * Constraints:
  * - Temperature range: 16°C to 32°C (matching MyAir limits)
  * - Minimum gap: 2°C between min and max (e.g., 22-24 is valid, 22-23 is not)
@@ -40,7 +45,7 @@ data class AutoModeZone(
     /**
      * Minimum acceptable temperature for this zone (16.0-32.0).
      * When zone temperature drops below this, heating is triggered.
-     * Target temp for heating = minTemp + 0.5°C (hysteresis).
+     * Target temp for heating = minTemp (exact boundary).
      */
     @Column(name = "min_temp", nullable = false)
     val minTemp: Double = 20.0,
@@ -48,7 +53,7 @@ data class AutoModeZone(
     /**
      * Maximum acceptable temperature for this zone (16.0-32.0).
      * When zone temperature rises above this, cooling is triggered.
-     * Target temp for cooling = maxTemp - 0.5°C (hysteresis).
+     * Target temp for cooling = maxTemp (exact boundary).
      */
     @Column(name = "max_temp", nullable = false)
     val maxTemp: Double = 24.0
@@ -57,7 +62,6 @@ data class AutoModeZone(
         const val MIN_ALLOWED_TEMP = 16.0
         const val MAX_ALLOWED_TEMP = 32.0
         const val MIN_TEMP_GAP = 2.0
-        const val HYSTERESIS = 0.5
 
         // Guest zone ID - cannot be the sole enabled zone or priority zone
         const val GUEST_ZONE_ID = 2L
@@ -90,31 +94,19 @@ data class AutoModeZone(
     fun needsCooling(currentTemp: Double): Boolean = currentTemp > maxTemp
 
     /**
-     * Check if heating should continue (hysteresis not yet reached).
-     * Heating continues until temp reaches minTemp + HYSTERESIS.
-     */
-    fun shouldContinueHeating(currentTemp: Double): Boolean = currentTemp < minTemp + HYSTERESIS
-
-    /**
-     * Check if cooling should continue (hysteresis not yet reached).
-     * Cooling continues until temp reaches maxTemp - HYSTERESIS.
-     */
-    fun shouldContinueCooling(currentTemp: Double): Boolean = currentTemp > maxTemp - HYSTERESIS
-
-    /**
      * Check if the current temperature is within the acceptable range.
      */
     fun isInRange(currentTemp: Double): Boolean = currentTemp >= minTemp && currentTemp <= maxTemp
 
     /**
-     * Get the target temperature for heating (with hysteresis).
+     * Get the target temperature for heating (exact boundary, no hysteresis).
      */
-    fun getHeatingTarget(): Double = minTemp + HYSTERESIS
+    fun getHeatingTarget(): Double = minTemp
 
     /**
-     * Get the target temperature for cooling (with hysteresis).
+     * Get the target temperature for cooling (exact boundary, no hysteresis).
      */
-    fun getCoolingTarget(): Double = maxTemp - HYSTERESIS
+    fun getCoolingTarget(): Double = maxTemp
 
     /**
      * Check if this is the Guest zone.

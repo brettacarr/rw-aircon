@@ -36,6 +36,9 @@ class AutoModeServiceTest {
     @Mock
     private lateinit var controlModeService: ControlModeService
 
+    @Mock
+    private lateinit var autoModeExecutionService: AutoModeExecutionService
+
     private lateinit var autoModeService: AutoModeService
 
     private val testZones = listOf(
@@ -50,7 +53,8 @@ class AutoModeServiceTest {
             autoModeConfigRepository,
             autoModeZoneRepository,
             zoneRepository,
-            controlModeService
+            controlModeService,
+            autoModeExecutionService
         )
 
         // Default setup

@@ -37,19 +37,17 @@ Only one mode can be active at a time. Switching modes preserves the configurati
 For each poll cycle:
 
 1. **Check myZone first** (the controlling zone):
-   - If myZone temp < min → Set system to **Heat**, target = min + 0.5°C
-   - If myZone temp > max → Set system to **Cool**, target = max - 0.5°C
+   - If myZone temp < min → Set system to **Heat**, target = min
+   - If myZone temp > max → Set system to **Cool**, target = max
    - If myZone within range → Continue to step 2
 
 2. **If myZone is within range**, check other active zones:
-   - If any zone temp < min → Set system to **Heat**, use that zone's min + 0.5°C as target
-   - If any zone temp > max → Set system to **Cool**, use that zone's max - 0.5°C as target
+   - If any zone temp < min → Set system to **Heat**, use that zone's min as target
+   - If any zone temp > max → Set system to **Cool**, use that zone's max as target
    - If multiple zones need adjustment, pick the one furthest outside its range
    - If zones have conflicting needs (one needs heat, another needs cool) → **Ignore conflicts**, only act on zones that align with current mode or the first zone evaluated
 
-3. **If all zones within range** → Turn system **OFF**
-
-4. **If system is OFF and any zone goes outside bounds** → Turn system **ON** and apply appropriate mode
+3. **If all zones within range** → Hold current mode and setpoint. The system stays **ON** and no new commands are issued.
 
 ### Conflict Resolution
 
@@ -62,10 +60,10 @@ When zones have conflicting temperature needs:
 ### Target Temperature Calculation
 
 When adjusting temperature:
-- **Heating**: Set target to `min + 0.5°C` (heat slightly beyond minimum to prevent immediate re-triggering)
-- **Cooling**: Set target to `max - 0.5°C` (cool slightly beyond maximum to prevent immediate re-triggering)
+- **Heating**: Set target to `min` (the zone's configured minimum temperature)
+- **Cooling**: Set target to `max` (the zone's configured maximum temperature)
 
-This 0.5°C overshoot acts as hysteresis to prevent rapid cycling.
+There is no hysteresis overshoot. The system holds at the boundary and stays on. The HVAC unit's built-in compressor protection handles any hardware-level cycling concerns.
 
 ## Guest Zone Restrictions
 
@@ -136,7 +134,7 @@ When Auto Mode is selected or configured:
 
 When Auto Mode is active, the Dashboard shows:
 - **Mode indicator**: "Auto Mode Active" badge/banner
-- **Current action**: "Heating to 22.5°C" or "Cooling to 23.5°C" or "All zones in range - System off"
+- **Current action**: "Heating to 20°C" or "Cooling to 24°C" or "All zones in range - Holding"
 - **Per-zone status**: Show min/max range and whether zone is within range
   - Green indicator: within range
   - Blue indicator: below min (needs heating)
